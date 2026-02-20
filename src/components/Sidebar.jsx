@@ -1,35 +1,43 @@
-import React, { useState } from "react";
+import React from "react";
+import { NavLink } from "react-router-dom";
 
 // ICONS //
-import { LuLayoutTemplate, LuChartLine } from "react-icons/lu";
-import { NavLink } from "react-router-dom";
+import { LuLayoutTemplate, LuChartLine, LuSettings } from "react-icons/lu";
 // ICONS //
 
 const Sidebar = () => {
-  const [activeLink, setActiveLink] = useState(0);
-  const handleLinkClick = (index) => setActiveLink(index);
-
   const SIDEBAR_LINKS = [
     { id: 1, path: "/", name: "Dashboard", icon: LuLayoutTemplate },
     { id: 2, path: "/campaign", name: "Campaign", icon: LuChartLine },
   ];
   return (
-    <div className="w-16 md:w-56 fixed left-0 top-0 z-10 h-screen pt-8 px-4 bg-midnight">
+    <div className="flex flex-col w-16 md:w-56 fixed left-0 top-0 z-10 h-screen pt-8 px-4 bg-white dark:bg-midnight">
       {/* LOGO */}
-      <div className="mb-8">
-        <img src="/Logo.svg" alt="logo" className="w-45 hidden md:flex" />
+      <NavLink to="/" end className="mb-8 block">
+        <img
+          src="/Logo.svg"
+          alt="logo"
+          className="w-36 ml-2 hidden md:flex dark:hidden"
+        />
+        <img
+          src="/Logo-dark.svg"
+          alt="logo"
+          className="w-36 ml-2 hidden md:hidden dark:flex"
+        />
         <img src="/Logo-mini.svg" alt="logo" className="w-12 flex md:hidden" />
-      </div>
+      </NavLink>
       {/* LOGO */}
 
       {/* NAV LINKS */}
-      <ul className="mt-6 space-y-6">
+      <ul className=" space-y-2 flex-1">
         {SIDEBAR_LINKS.map((link, index) => (
           <li key={index}>
             <NavLink
               to={link.path}
-              onClick={() => handleLinkClick(index)}
-              className={`flex w-full justify-center md:justify-start items-center md:space-x-5 py-2 md:px-5 rounded-md font-medium ${activeLink === index ? "bg-evening text-sky" : "hover:bg-evening hover:text-sky text-white"}`}
+              end={link.path === "/"}
+              className={({ isActive }) =>
+                `flex w-full justify-center md:justify-start items-center md:space-x-5 py-2 md:px-5 rounded-md font-medium ${isActive ? "bg-gray-200 dark:bg-pitch dark:text-sky" : "hover:bg-gray-200 dark:text-gray-300 dark:hover:text-sky dark:hover:bg-pitch"}`
+              }
             >
               <span className=""> {link.icon()} </span>
               <span className="text-s hidden md:flex"> {link.name} </span>
@@ -38,6 +46,17 @@ const Sidebar = () => {
         ))}
       </ul>
       {/* NAV LINKS */}
+
+      {/* SETTINGS */}
+      <NavLink
+        to="/settings"
+        className={({ isActive }) =>
+          `mt-auto mb-4 flex w-full justify-center md:justify-start items-center md:space-x-5 py-2 md:px-5 rounded-md font-medium ${isActive ? "bg-gray-200 dark:bg-pitch dark:text-sky" : "hover:bg-gray-200 dark:text-gray-300 dark:hover:text-sky dark:hover:bg-pitch"}`
+        }
+      >
+        <span className=""> {LuSettings()} </span>
+        <span className="text-s hidden md:flex"> Settings </span>
+      </NavLink>
     </div>
   );
 };

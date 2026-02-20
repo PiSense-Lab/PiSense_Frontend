@@ -1,11 +1,18 @@
-function App() {
+import { BrowserRouter, Route, Routes } from "react-router-dom"
+import Layout from "./components/Layout"
+import Home from "./pages/Home"
+import Campaign from "./pages/Campaign"
 
+function App() {
   return (
-    <>
-    <div className="flex items-center justify-center h-screen">
-      <h1 className="text-3xl text-center">Welcome to PiSense!</h1>
-    </div>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout/>}>
+          <Route index element={<Home/>} />
+          <Route path="campaign" element={<Campaign/>} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

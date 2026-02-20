@@ -1,9 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --color-midnight: #0F172B;
+  --color-evening: #1D293D;
+  --color-sky: #00A6F4;
+  --color-lightsky: #00BCFF;
+  --color-ghost: #f6fbff;
+  --color-text: #111827;
+}
+
 :root {
-  --background-color: #f6fbff;
-  --text-color: #111827;
+  --background-color: var(--background-color);
+  --text-color: var(--color-text);
 }
 
 html, body {

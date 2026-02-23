@@ -7,7 +7,7 @@ import { LuBell, LuSearch, LuUser } from "react-icons/lu";
 
 const Header = () => {
   return (
-    <div className="flex left-16 md:left-56 right-0 fixed z-10 shadow-xs md:justify-between justify-end items-center p-4 bg-white dark:bg-midnight dark:text-white">
+    <div className="flex left-16 md:left-56 right-0 fixed z-10 shadow-xs md:justify-between justify-end items-center p-4 pl-0 bg-white dark:bg-midnight dark:text-white">
       <div className="hidden md:flex w-90 relative rounded-md items-center bg-gray-100 text-midnight/80 dark:text-gray-300 dark:bg-pitch">
         <LuSearch size={20} className="absolute left-3" />
         <input

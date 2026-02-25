@@ -11,7 +11,7 @@ const Layout = () => {
       <div className="w-full ml-16 md:ml-56 ">
         <Header />
 
-        <div className="pt-22 px-4 h-screen dark:bg-pitch">
+        <div className="pt-22 px-4 pb-4 h-auto dark:bg-pitch">
           <Outlet />
         </div>
       </div>

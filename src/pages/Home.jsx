@@ -2,6 +2,8 @@ import React from "react";
 import SmallContainer from "../components/SmallContainer";
 import Graph from "../components/Graph";
 import QuickActions from "../components/QuickActions";
+import AIInsight from "../components/AIInsight";
+import SystemMonitor from "../components/SystemMonitor";
 
 const Home = () => {
   const TOPBAR_BOXES = [
@@ -30,10 +32,10 @@ const Home = () => {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="">
-          <Graph />
+          <AIInsight />
         </div>
         <div className="">
-          <Graph />
+          <SystemMonitor />
         </div>
       </div>
     </div>

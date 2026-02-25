@@ -9,11 +9,6 @@
   --color-sky: #00a6f4;
 }
 
-:root {
-  --background-color: var(--color-gray-100);
-  --text-color: var(--color-black);
-}
-
 .dark {
   --background-color: var(--color-pitch);
   --text-color: var(--color-gray-300);

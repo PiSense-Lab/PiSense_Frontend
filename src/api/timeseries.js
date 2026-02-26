@@ -38,3 +38,25 @@ export const uploadData = async (inputData, inputType) => {
         return { success: false, message: error.message };
     }
 }
+
+// FETCH PROCESSED DATA FROM BACKEND
+export const getProcessedData = async (dataType, startDate, endDate) => {
+    try {
+        const response = await fetch(`${BASE_URL}/api/processed-data`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ dataType, startDate, endDate }),
+        });
+        if (!response.ok) {
+            throw new Error(`Server responded with status ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching processed data:", error);
+        return { success: false, message: error.message };
+    }
+}
+
+

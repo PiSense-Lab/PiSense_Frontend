@@ -1,16 +1,12 @@
 import React, { useState } from "react";
 
-import RoundButton from "./RoundButton";
-import FileImport from "./FileImport";
-import SelectedDataset from "./SelectedDataset";
+import RoundButton from "../ui/RoundButton";
+import SelectedDataset from "../features/SelectedDataset";
+import CenterPortal from "../portals/CenterPortal";
+import { MODALS } from "../constants/modalTypes";
 
 const QuickActions = () => {
   const [currentModal, setCurrentModal] = useState(null);
-  const MODALS = {
-    CSV: "Upload CSV",
-    EXCEL: "Upload Excel",
-    MANUAL: "Manual Entry",
-  };
 
   const datasets = [
     {
@@ -49,7 +45,7 @@ const QuickActions = () => {
         </RoundButton>
       </div>
       <SelectedDataset datasets={datasets} />
-      <FileImport
+      <CenterPortal
         open={currentModal !== null}
         onClose={() => setCurrentModal(null)}
         currentModal={currentModal}

@@ -1,5 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Layout from "./components/Layout";
+import Layout from "./components/layout/Layout";
 import Home from "./pages/Home";
 import Campaign from "./pages/Campaign";
 import Settings from "./pages/Settings";

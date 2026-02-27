@@ -1,5 +1,5 @@
 import React from "react";
-import RoundButton from "./RoundButton";
+import RoundButton from "../ui/RoundButton";
 
 const AIInsight = () => {
   return (

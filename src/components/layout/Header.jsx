@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import ToggleDarkMode from "./Toggle";
+import ToggleDarkMode from "../ui/Toggle";
 
 // ICONS //
 import { LuBell, LuSearch, LuUser } from "react-icons/lu";
-import DropDownProfile from "./DropDownProfile";
+import DropDownProfile from "../ui/DropDownProfile";
 // ICONS //
 
 const Header = () => {

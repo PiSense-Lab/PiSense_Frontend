@@ -1,9 +1,9 @@
 import React from "react";
-import SmallContainer from "../components/SmallContainer";
-import Graph from "../components/Graph";
-import QuickActions from "../components/QuickActions";
-import AIInsight from "../components/AIInsight";
-import SystemMonitor from "../components/SystemMonitor";
+import SmallContainer from "../components/dashboard/SmallContainer";
+import Graph from "../components/dashboard/Graph";
+import QuickActions from "../components/dashboard/QuickActions";
+import AIInsight from "../components/dashboard/AIInsight";
+import SystemMonitor from "../components/dashboard/SystemMonitor";
 
 const Home = () => {
   const TOPBAR_BOXES = [

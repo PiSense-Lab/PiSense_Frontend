@@ -1,6 +1,6 @@
 import { IoSunny } from "react-icons/io5";
 import { HiMiniMoon } from "react-icons/hi2";
-import useDarkMode from "../hooks/useDarkMode";
+import useDarkMode from "../../hooks/useDarkMode";
 
 const Toggle = () => {
   const { toggleDarkMode, isDarkMode } = useDarkMode();

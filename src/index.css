@@ -4,14 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-pitch: #0c1324;
+  --color-pitch: hsl(223, 50%, 9%);
   --color-midnight: #151e36;
   --color-sky: #00a6f4;
-}
-
-.dark {
-  --background-color: var(--color-pitch);
-  --text-color: var(--color-gray-300);
 }
 
 html,
@@ -19,8 +14,6 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Lato", sans-serif;
-  background-color: var(--color-gray-200);
-  color: var(--text-color);
 }
 
 button {

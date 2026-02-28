@@ -1,24 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
-  --color-midnight: #0F172B;
-  --color-evening: #1D293D;
-  --color-sky: #00A6F4;
-  --color-lightsky: #00BCFF;
-  --color-ghost: #f6fbff;
-  --color-text: #111827;
+  --color-pitch: #0c1324;
+  --color-midnight: #151e36;
+  --color-sky: #00a6f4;
 }
 
-:root {
-  --background-color: var(--background-color);
-  --text-color: var(--color-text);
+.dark {
+  --background-color: var(--color-pitch);
+  --text-color: var(--color-gray-300);
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
-  font-family: "Open Sans", sans-serif;
-  background-color: var(--background-color);
+  font-family: "Lato", sans-serif;
+  background-color: var(--color-gray-200);
   color: var(--text-color);
+}
+
+button {
+  cursor: pointer;
 }

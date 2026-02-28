@@ -4,7 +4,7 @@ import RoundButton from "./RoundButton";
 import FileImport from "./FileImport";
 import SelectedDataset from "./SelectedDataset";
 
-const QuickActions = () => {
+const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
   const [currentModal, setCurrentModal] = useState(null);
   const MODALS = {
     CSV: "Upload CSV",
@@ -49,10 +49,14 @@ const QuickActions = () => {
         </RoundButton>
       </div>
       <SelectedDataset datasets={datasets} />
+      
       <FileImport
         open={currentModal !== null}
         onClose={() => setCurrentModal(null)}
         currentModal={currentModal}
+        onUpload={onUpload} //propagate to FileImport
+        onManualSubmit={onManualSubmit} //propagate to FileImports
+        setUploadFiles={setUploadFiles} //propagate to FileImport
       />
     </div>
   );

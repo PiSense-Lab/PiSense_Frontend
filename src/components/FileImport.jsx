@@ -4,8 +4,9 @@ import RoundButton from "./RoundButton";
 
 import { RxCross2 } from "react-icons/rx";
 import { SlCloudUpload } from "react-icons/sl";
+import { uploadData } from "../api/timeseries";
 
-const FileImport = ({ open, onClose, currentModal }) => {
+const FileImport = ({ open, onClose, currentModal, onUpload, setUploadFiles }) => {
   const [isDragging, setIsDragging] = useState(false); // Track drag state
   const [files, setFiles] = useState([]); // Store multiple files
   const fileInputRef = useRef(null); // Reference to hidden input element
@@ -46,13 +47,12 @@ const FileImport = ({ open, onClose, currentModal }) => {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    dragCounter.current = 0;
+    //dragCounter.current = 0;
 
-    // Process dropped files
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files); // Convert FileList to Array
-      setFiles((prev) => [...prev, ...droppedFiles]); // Add to existing files
-      e.dataTransfer.clearData(); // Clean up drag data
+      const newFiles = Array.from(e.dataTransfer.files); // Convert FileList to Array
+      setFiles((prev) => [...prev, ...newFiles]); // Add to existing files
+      setUploadFiles((prev) => [...prev, ...newFiles]); // Update parent state with new files
     }
   };
 
@@ -61,45 +61,64 @@ const FileImport = ({ open, onClose, currentModal }) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
       setFiles((prev) => [...prev, ...selectedFiles]);
+      setUploadFiles((prev) => [...prev, ...selectedFiles]); // Update parent state with new files 
     }
   };
 
   // File upload function
   const handleUpload = async () => {
     // Validate that a file is selected before proceeding
-    if (!files) {
-      setUploadStatus("Please select a file first.");
-      return;
+    if (files.length === 0) {
+      return setUploadStatus("Please select a file first.");
     }
-
-    // Create FormData object - required for sending binary file data
-    const formData = new FormData();
-    formData.append("file", files); // Add file with 'file' key
 
     try {
       setUploadStatus("Uploading...");
-
-      // Send POST request using fetch API
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData, // Send FormData directly, not JSON
-      });
-
-      // Handle response based on status
-      if (response.ok) {
-        setUploadStatus("Upload completed successfully!");
-      } else {
-        setUploadStatus("Upload failed");
+      for (const file of files) {
+        // Determine type (CSV or EXCEL) based on the modal title
+        const type = currentModal.toLowerCase().includes("csv") ? "csv" : "excel"; 
+        const result = await uploadData(file, type);
+        if (!result.success) throw new Error(result.message);
       }
+      setUploadStatus("Upload completed successfully!");
+      onUpload(); // let Home.jsx knows upload is done
+      setTimeout(() => {
+        setUploadStatus(""); // Clear status after a delay
+      }, 1000);
     } catch (error) {
-      setUploadStatus("Error occurred during upload");
-      console.error("Upload error:", error);
+      setUploadStatus(`Upload failed: ${error.message}`);
     }
-  };
+  }; 
+
+  //   // Create FormData object - required for sending binary file data
+  //   const formData = new FormData();
+  //   formData.append("file", files); // Add file with 'file' key
+
+  //   try {
+  //     setUploadStatus("Uploading...");
+
+  //     // Send POST request using fetch API
+  //     const response = await fetch("/api/upload", {
+  //       method: "POST",
+  //       body: formData, // Send FormData directly, not JSON
+  //     });
+
+  //     // Handle response based on status
+  //     if (response.ok) {
+  //       setUploadStatus("Upload completed successfully!");
+  //     } else {
+  //       setUploadStatus("Upload failed");
+  //     }
+  //   } catch (error) {
+  //     setUploadStatus("Error occurred during upload");
+  //     console.error("Upload error:", error);
+  //   }
+  // };
 
   // Remove file from the list
   const removeFile = (index) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+    setUploadFiles((prev) => prev.filter((_, i) => i !== index)); // Update parent state
   };
 
   // Programmatically open file selection dialog
@@ -195,7 +214,7 @@ const FileImport = ({ open, onClose, currentModal }) => {
           <RoundButton
             className="bg-sky text-white"
             onClick={() => {
-              handleUpload();
+              handleUpload(); 
             }}
           >
             Upload

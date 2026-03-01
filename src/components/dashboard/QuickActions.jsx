@@ -5,7 +5,7 @@ import SelectedDataset from "../features/SelectedDataset";
 import CenterPortal from "../portals/CenterPortal";
 import { MODALS } from "../constants/modalTypes";
 
-const QuickActions = () => {
+const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
   const [currentModal, setCurrentModal] = useState(null);
 
   const datasets = [
@@ -49,6 +49,9 @@ const QuickActions = () => {
         open={currentModal !== null}
         onClose={() => setCurrentModal(null)}
         currentModal={currentModal}
+        onUpload={onUpload}
+        onManualSubmit={onManualSubmit}
+        setUploadFiles={setUploadFiles}
       />
     </div>
   );

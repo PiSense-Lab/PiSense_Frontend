@@ -3,7 +3,14 @@ import ReactDOM from "react-dom";
 import FileImport from "../features/FileImport";
 import { MODALS } from "../constants/modalTypes";
 
-const CenterPortal = ({ open, onClose, currentModal }) => {
+const CenterPortal = ({
+  open,
+  onClose,
+  currentModal,
+  onUpload,
+  onManualSubmit,
+  setUploadFiles,
+}) => {
   if (!open) return null;
 
   return ReactDOM.createPortal(
@@ -13,7 +20,14 @@ const CenterPortal = ({ open, onClose, currentModal }) => {
         onClick={onClose}
       ></div>
       {[MODALS.CSV, MODALS.EXCEL].includes(currentModal) && (
-        <FileImport onClose={onClose} currentModal={currentModal} />
+        <FileImport
+          open={open}
+          onClose={onClose}
+          currentModal={currentModal}
+          onUpload={onUpload}
+          onManualSubmit={onManualSubmit}
+          setUploadFiles={setUploadFiles}
+        />
       )}
     </>,
     document.getElementById("portal"),

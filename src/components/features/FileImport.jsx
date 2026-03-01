@@ -1,10 +1,18 @@
 import React, { useState, useRef } from "react";
+import ReactDom from "react-dom";
 import RoundButton from "../ui/RoundButton";
 
 import { RxCross2 } from "react-icons/rx";
 import { SlCloudUpload } from "react-icons/sl";
+import { uploadData } from "../../api/timeseries";
 
-const FileImport = ({ onClose, currentModal }) => {
+const FileImport = ({
+  open,
+  onClose,
+  currentModal,
+  onUpload,
+  setUploadFiles,
+}) => {
   const [isDragging, setIsDragging] = useState(false); // Track drag state
   const [files, setFiles] = useState([]); // Store multiple files
   const fileInputRef = useRef(null); // Reference to hidden input element
@@ -17,6 +25,8 @@ const FileImport = ({ onClose, currentModal }) => {
     UPLOAD_EXCEL: "Upload Excel",
     MANUAL_ENTRY: "Manual Entry",
   };
+
+  if (!open) return null;
 
   // Called when files are dragged into the drop zone
   const handleDragEnter = (e) => {
@@ -49,13 +59,12 @@ const FileImport = ({ onClose, currentModal }) => {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    dragCounter.current = 0;
+    //dragCounter.current = 0;
 
-    // Process dropped files
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files); // Convert FileList to Array
-      setFiles((prev) => [...prev, ...droppedFiles]); // Add to existing files
-      e.dataTransfer.clearData(); // Clean up drag data
+      const newFiles = Array.from(e.dataTransfer.files); // Convert FileList to Array
+      setFiles((prev) => [...prev, ...newFiles]); // Add to existing files
+      setUploadFiles((prev) => [...prev, ...newFiles]); // Update parent state with new files
     }
   };
 
@@ -64,37 +73,75 @@ const FileImport = ({ onClose, currentModal }) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
       setFiles((prev) => [...prev, ...selectedFiles]);
+      setUploadFiles((prev) => [...prev, ...selectedFiles]); // Update parent state with new files
     }
   };
 
   // File upload function
   const handleUpload = async () => {
     if (files.length === 0) {
-      setUploadStatus("Please select a file first.");
-      return;
+      return setUploadStatus("Please select a file first.");
     }
 
-    const formData = new FormData();
-
-    files.forEach((file) => {
-      formData.append("files", file);
-    });
-
     try {
+      setUploadStatus("Validating files...");
+
+      for (const file of files) {
+        const fileName = file.name.toLowerCase();
+        const fileType = file.type;
+
+        const isCSV = fileName.endsWith(".csv") || fileType === "text/csv";
+
+        const isExcel =
+          fileName.endsWith(".xls") ||
+          fileName.endsWith(".xlsx") ||
+          fileType === "application/vnd.ms-excel" ||
+          fileType ===
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+        // Determine expected type from modal
+        const expectedType = currentModal.toLowerCase().includes("csv")
+          ? "csv"
+          : "excel";
+
+        if (expectedType === "csv" && !isCSV) {
+          throw new Error(`${file.name} is not a valid CSV file.`);
+        }
+
+        if (expectedType === "excel" && !isExcel) {
+          throw new Error(`${file.name} is not a valid Excel file.`);
+        }
+      }
+
       setUploadStatus("Uploading...");
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      for (const file of files) {
+        const type = currentModal.toLowerCase().includes("csv")
+          ? "csv"
+          : "excel";
 
-      if (response.ok) {
-        setUploadStatus("Upload completed successfully!");
-      } else {
-        setUploadStatus("Upload failed");
+        console.log(`Preparing to send: ${file.name} as type: ${type}`);
+
+        const result = await uploadData(file, type);
+
+        if (!result.success) throw new Error(result.message);
       }
+
+      setUploadStatus("Upload completed successfully!");
+      onUpload();
+
+      setTimeout(() => {
+        setFiles([]);
+        setUploadFiles([]);
+        onClose();
+      }, 1000);
     } catch (error) {
-      setUploadStatus("Error occurred during upload");
+      if (error.message === "Failed to fetch") {
+        setUploadStatus("Cannot reach the server");
+      } else {
+        setUploadStatus(error.message);
+      }
+
       console.error("Upload error:", error);
     }
   };
@@ -102,6 +149,7 @@ const FileImport = ({ onClose, currentModal }) => {
   // Remove file from the list
   const removeFile = (index) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+    setUploadFiles((prev) => prev.filter((_, i) => i !== index)); // Update parent state
   };
 
   // Programmatically open file selection dialog
@@ -115,7 +163,11 @@ const FileImport = ({ onClose, currentModal }) => {
     onClose();
   };
 
-  return (
+  const acceptType = currentModal?.toLowerCase().includes("csv")
+    ? ".csv,text/csv"
+    : ".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+  return ReactDom.createPortal(
     <>
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-1000 w-80 md:w-120 flex flex-col items-center rounded-md gap-4 px-8 py-6 bg-white dark:bg-midnight">
         <h1 className="text-lg font-semibold">{modalTitles[currentModal]}</h1>
@@ -134,7 +186,7 @@ const FileImport = ({ onClose, currentModal }) => {
             multiple // Allow multiple file selection
             onChange={handleFileInput}
             style={{ display: "none" }}
-            accept="image/*"
+            accept={acceptType}
           />
 
           <div className="flex flex-col items-center justify-center">
@@ -211,7 +263,8 @@ const FileImport = ({ onClose, currentModal }) => {
           </RoundButton>
         </div>
       </div>
-    </>
+    </>,
+    document.getElementById("portal"),
   );
 };
 

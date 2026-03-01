@@ -77,16 +77,29 @@ const FileImport = ({ open, onClose, currentModal, onUpload, setUploadFiles }) =
       for (const file of files) {
         // Determine type (CSV or EXCEL) based on the modal title
         const type = currentModal.toLowerCase().includes("csv") ? "csv" : "excel"; 
+        console.log(`Preparing to send: ${file.name} as type: ${type}`);
+        console.log("Starting " + file.name);
         const result = await uploadData(file, type);
         if (!result.success) throw new Error(result.message);
+        console.log("Finished " + file.name);
       }
       setUploadStatus("Upload completed successfully!");
       onUpload(); // let Home.jsx knows upload is done
+      
       setTimeout(() => {
-        setUploadStatus(""); // Clear status after a delay
+        setFiles([]); // Clear local list
+        setUploadFiles([]); // Clear parent state list
+        onClose(); // Close the modal
       }, 1000);
     } catch (error) {
+      //setUploadStatus(`Upload failed: ${error.message}`);
+      if (error.message === "Failed to fetch") {
+        setUploadStatus("Cannot reach the server");
+      } else {
+      // Other errors (like file too big, wrong format, etc.)
       setUploadStatus(`Upload failed: ${error.message}`);
+    }
+      console.error("Failed:", error.message);
     }
   }; 
 
@@ -152,7 +165,7 @@ const FileImport = ({ open, onClose, currentModal, onUpload, setUploadFiles }) =
             multiple // Allow multiple file selection
             onChange={handleFileInput}
             style={{ display: "none" }}
-            accept="image/*"
+            accept=".csv, .xlsx, .xls*"
           />
 
           <div className="flex flex-col items-center justify-center">

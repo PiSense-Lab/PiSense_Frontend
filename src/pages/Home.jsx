@@ -11,19 +11,22 @@ const Home = () => {
   const [manualData, setManualData] = useState("");
   const [uploadFiles, setUploadFiles] = useState([]); // Array to hold multiple files
   const [processedData, setProcessedData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
 
-  const mockResponse = { success: true, message: "Mock API worked!", data: [1,2,3,4,5] };
   const handleManualSubmit = async () => {
     setLoading(true);
-    const response = mockResponse;
-    //Later replace with actual API call
-    console.log("Manual submit response:", response);
-    setLoading(false);
-  }
-  const handleFileUpload = async () => {
-    console.log("FileImport reported success! Refreshing data...");
+    // Simulate API call
+    console.log("Manual submit initiated...");
+    setTimeout(() => {
+      setLoading(false);
+      alert("Manual data processed!");
+    }, 1000);
   };
+
+  const handleFileUpload = async () => {
+    // This runs AFTER FileImport.jsx finishes its loop
+    console.log("Success signal received from FileImport!");
+      };
 
   const TOPBAR_BOXES = [
     { name: "Active Project:", value: "Weather" },
@@ -46,7 +49,11 @@ const Home = () => {
           <Graph data={processedData} />
         </div>
         <div className="flex-1">
-          <QuickActions onUpload={handleFileUpload} onManualSubmit={handleManualSubmit} setUploadFiles={setUploadFiles} />
+          <QuickActions 
+          onUpload={handleFileUpload} 
+          onManualSubmit={handleManualSubmit} 
+          setUploadFiles={setUploadFiles} 
+          />
         </div>
       </div>
 

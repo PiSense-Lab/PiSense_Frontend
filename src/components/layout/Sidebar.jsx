@@ -29,7 +29,7 @@ const Sidebar = () => {
       {/* LOGO */}
 
       {/* NAV LINKS */}
-      <ul className=" space-y-2 flex-1">
+      <ul className="space-y-2 flex-1">
         {SIDEBAR_LINKS.map((link, index) => (
           <li key={index}>
             <NavLink

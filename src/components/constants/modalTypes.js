@@ -1,0 +1,5 @@
+export const MODALS = {
+  CSV: "UPLOAD_CSV",
+  EXCEL: "UPLOAD_EXCEL",
+  MANUAL: "MANUAL_ENTRY",
+};

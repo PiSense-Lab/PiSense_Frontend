@@ -20,3 +20,27 @@ const Layout = () => {
 };
 
 export default Layout;
+
+import React from "react";
+import Sidebar from "./Sidebar";
+import Header from "./Header";
+import { Outlet } from "react-router-dom";
+
+const Layout = () => {
+  return (
+    <div className="flex">
+      <Sidebar />
+
+      <div className="w-full ml-16 md:ml-56 ">
+        <Header />
+
+        {/* Add top padding here */}
+        <div className="pt-28 p-4 h-screen ">
+          <Outlet />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Layout;

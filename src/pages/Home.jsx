@@ -1,17 +1,16 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import SmallContainer from "../components/SmallContainer";
-import Graph from "../components/Graph";
-import QuickActions from "../components/QuickActions";
-import AIInsight from "../components/AIInsight";
-import SystemMonitor from "../components/SystemMonitor";
+import React, { useState } from "react";
+import SmallContainer from "../components/dashboard/SmallContainer";
+import Graph from "../components/dashboard/Graph";
+import QuickActions from "../components/dashboard/QuickActions";
+import AIInsight from "../components/dashboard/AIInsight";
+import SystemMonitor from "../components/dashboard/SystemMonitor";
 import { uploadData, getProcessedData } from "../api/timeseries";
 
 const Home = () => {
   const [manualData, setManualData] = useState("");
   const [uploadFiles, setUploadFiles] = useState([]); // Array to hold multiple files
   const [processedData, setProcessedData] = useState(null);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   const handleManualSubmit = async () => {
     setLoading(true);
@@ -26,7 +25,7 @@ const Home = () => {
   const handleFileUpload = async () => {
     // This runs AFTER FileImport.jsx finishes its loop
     console.log("Success signal received from FileImport!");
-      };
+  };
 
   const TOPBAR_BOXES = [
     { name: "Active Project:", value: "Weather" },
@@ -49,10 +48,10 @@ const Home = () => {
           <Graph data={processedData} />
         </div>
         <div className="flex-1">
-          <QuickActions 
-          onUpload={handleFileUpload} 
-          onManualSubmit={handleManualSubmit} 
-          setUploadFiles={setUploadFiles} 
+          <QuickActions
+            onUpload={handleFileUpload}
+            onManualSubmit={handleManualSubmit}
+            setUploadFiles={setUploadFiles}
           />
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import FileImport from "../features/FileImport";
+import FileImport from "./FileImport";
 import { MODALS } from "../constants/modalTypes";
 
 const CenterPortal = ({

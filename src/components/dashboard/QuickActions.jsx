@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 
-import RoundButton from "../ui/RoundButton";
-import SelectedDataset from "../features/SelectedDataset";
-import CenterPortal from "../portals/CenterPortal";
-import { MODALS } from "../constants/modalTypes";
+import RoundButton from "../RoundButton";
+import SelectedDataset from "../SelectedDataset";
+import CenterPortal from "../CenterPortal";
+import { MODALS } from "../../constants/modalTypes";
 
 const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
   const [currentModal, setCurrentModal] = useState(null);

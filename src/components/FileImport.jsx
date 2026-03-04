@@ -1,10 +1,10 @@
 import React, { useState, useRef } from "react";
 import ReactDom from "react-dom";
-import RoundButton from "../ui/RoundButton";
+import RoundButton from "./RoundButton";
 
 import { RxCross2 } from "react-icons/rx";
 import { SlCloudUpload } from "react-icons/sl";
-import { uploadData } from "../../api/timeseries";
+import { uploadData } from "../api/timeseries";
 
 const FileImport = ({
   open,

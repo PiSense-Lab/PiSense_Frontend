@@ -22,7 +22,7 @@ const Sidebar = () => {
         <img
           src="/Logo-dark.svg"
           alt="logo"
-          className="w-36 ml-2 hidden md:hidden dark:flex"
+          className="w-36 ml-2 hidden md:hidden md:dark:flex"
         />
         <img src="/Logo-mini.svg" alt="logo" className="w-12 flex md:hidden" />
       </NavLink>

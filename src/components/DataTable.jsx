@@ -35,15 +35,15 @@ const DataTable = () => {
     });
 
     return (
-        <div className="w-full overflow-x-auto rounded-md">
-            <table className="w-full border-collapse text-sm">
+        <div className="w-full overflow-x-auto">
+            <table className="w-full border-separate border-spacing-y-2 text-sm">
                 <thead className="bg-white dark:bg-midnight">
                     {table.getHeaderGroups().map((headerGroup) => (
-                        <tr key={headerGroup.id} className="border-b border-gray-200 dark:border-gray-700">
+                        <tr key={headerGroup.id} className="">
                             {headerGroup.headers.map((header) => (
                                 <th
                                     key={header.id}
-                                    className="px-4 py-3 text-left font-semibold "
+                                    className="px-4 py-3 first:rounded-l-md last:rounded-r-md text-center text-lg font-semibold border border-gray-200 dark:border-gray-700 "
                                 >
                                     {header.isPlaceholder
                                         ? null
@@ -57,16 +57,16 @@ const DataTable = () => {
                     ))}
                 </thead>
 
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800 bg-gray-100 dark:bg-pitch">
+                <tbody className="">
                     {table.getRowModel().rows.map((row) => (
                         <tr
                             key={row.id}
-                            className="hover:bg-gray-200 dark:hover:bg-midnight"
+                            className="hover:bg-gray-100 dark:hover:bg-pitch bg-white dark:bg-midnight/50 dark:hover:text-sky"
                         >
                             {row.getVisibleCells().map((cell) => (
                                 <td
                                     key={cell.id}
-                                    className="px-4 py-3 "
+                                    className="px-4 py-3 border border-r first:rounded-l-md last:rounded-r-md last:border-r-0 border-gray-200 dark:border-gray-700 dark:border "
                                 >
                                     {flexRender(
                                         cell.column.columnDef.cell,

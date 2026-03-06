@@ -1,12 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import FileImport from "./FileImport";
-import { MODALS } from "../constants/modalTypes";
 
 const CenterPortal = ({
   open,
   onClose,
-  currentModal,
   onUpload,
   onManualSubmit,
   setUploadFiles,
@@ -19,16 +17,14 @@ const CenterPortal = ({
         className="bg-gray-950/70 fixed inset-0 z-50"
         onClick={onClose}
       ></div>
-      {[MODALS.CSV, MODALS.EXCEL].includes(currentModal) && (
-        <FileImport
-          open={open}
-          onClose={onClose}
-          currentModal={currentModal}
-          onUpload={onUpload}
-          onManualSubmit={onManualSubmit}
-          setUploadFiles={setUploadFiles}
-        />
-      )}
+
+      <FileImport
+        open={open}
+        onClose={onClose}
+        onUpload={onUpload}
+        onManualSubmit={onManualSubmit}
+        setUploadFiles={setUploadFiles}
+      />
     </>,
     document.getElementById("portal"),
   );

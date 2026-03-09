@@ -3,8 +3,8 @@ import DataTable from "../components/DataTable";
 import UploadButton from "../components/UploadButton";
 
 const Data = (onUpload, onManualSubmit, setUploadFiles) => {
-  return <div className="flex flex-col items-end gap-2">
-    <div className="flex">
+  return <div className="">
+    <div className="flex fixed w-full z-50">
       <UploadButton
         onUpload={onUpload}
         onManualSubmit={onManualSubmit}
@@ -12,8 +12,9 @@ const Data = (onUpload, onManualSubmit, setUploadFiles) => {
       >
         Upload File
       </UploadButton>
+
     </div>
-    <DataTable />
+    <div className="pt-20"><DataTable /></div>
   </div>;
 };
 

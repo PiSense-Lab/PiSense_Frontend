@@ -2,6 +2,7 @@ import React from "react";
 
 import SelectedDataset from "../SelectedDataset";
 import UploadButton from "../UploadButton";
+import RoundButton from "../RoundButton";
 
 const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
 
@@ -35,6 +36,13 @@ const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
         >
           Manual Entry
         </RoundButton> */}
+        
+        <RoundButton
+          className="bg-sky text-white w-full"
+          onClick={() => onManualSubmit()}
+        >
+          Manual Entry
+        </RoundButton>
 
       </div>
       <SelectedDataset datasets={datasets} />
@@ -42,5 +50,4 @@ const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
     </div>
   );
 };
-
 export default QuickActions;

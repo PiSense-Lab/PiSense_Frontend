@@ -5,12 +5,16 @@ import QuickActions from "../components/dashboard/QuickActions";
 import AIInsight from "../components/dashboard/AIInsight";
 import SystemMonitor from "../components/dashboard/SystemMonitor";
 import { uploadData, getProcessedData } from "../api/timeseries";
+import ManualGrid from "../components/Spreadsheet";
+
 
 const Home = () => {
   const [manualData, setManualData] = useState("");
   const [uploadFiles, setUploadFiles] = useState([]); // Array to hold multiple files
   const [processedData, setProcessedData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isManualOpen, setIsManualOpen] = useState(false); // Manual entry spreadsheet
+  
 
   const handleManualSubmit = async () => {
     setLoading(true);
@@ -50,12 +54,12 @@ const Home = () => {
         <div className="flex-1">
           <QuickActions
             onUpload={handleFileUpload}
-            onManualSubmit={handleManualSubmit}
+            onManualSubmit={() => setIsManualOpen(true)}
             setUploadFiles={setUploadFiles}
           />
         </div>
       </div>
-
+      <ManualGrid open={isManualOpen} onClose={() => setIsManualOpen(false)} />
       <div className="grid md:grid-cols-2 gap-4">
         <div className="">
           <AIInsight />

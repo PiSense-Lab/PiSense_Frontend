@@ -58,3 +58,4 @@ Features
 - Interactive visualization components for dataset exploration
 - Communicates with the PiSense backend API for processing and storage
 - Built with performance in mind using Vite and Tailwind CSS
+- Runner connected for deployment

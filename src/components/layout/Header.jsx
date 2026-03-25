@@ -12,8 +12,8 @@ const Header = () => {
 
   return (
     <>
-      <div className="flex left-16 md:left-56 right-0 fixed z-10 shadow-xs md:justify-between justify-end items-center p-4 pl-0 bg-white dark:bg-midnight dark:text-white">
-        <div className="hidden md:flex w-90 relative rounded-md items-center bg-gray-100 text-midnight/80 dark:text-gray-300 dark:bg-pitch">
+      <div className="flex left-16 md:left-56 right-0 fixed z-10 shadow-xs md:justify-between justify-end items-center p-4 pl-1 bg-white dark:bg-midnight dark:text-white">
+        <div className="hidden md:flex w-90 relative rounded-md items-center bg-gray-200 text-midnight/80 dark:text-gray-300 dark:bg-pitch">
           <LuSearch size={20} className="absolute left-3" />
           <input
             type="text"
@@ -24,14 +24,12 @@ const Header = () => {
         <div className="flex items-center space-x-3">
           <button
             onClick={toggleDarkMode}
-            className={`w-14 h-full flex items-center rounded-full p-1 ${
-              isDarkMode ? "bg-pitch" : "bg-gray-200"
-            }`}
+            className={`w-14 h-full flex items-center rounded-full p-1 ${isDarkMode ? "bg-pitch" : "bg-gray-200"
+              }`}
           >
             <div
-              className={`flex justify-center items-center bg-white dark:bg-gray-300 w-5 h-5 rounded-full shadow-md transform transition-transform duration-300 ${
-                isDarkMode ? "translate-x-7" : "translate-x-0"
-              }`}
+              className={`flex justify-center items-center bg-white dark:bg-gray-300 w-5 h-5 rounded-full shadow-md transform transition-transform duration-300 ${isDarkMode ? "translate-x-7" : "translate-x-0"
+                }`}
             >
               <span className="text-yellow-500 flex dark:hidden ">
                 {IoSunny()}

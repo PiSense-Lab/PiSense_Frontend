@@ -30,8 +30,9 @@ const EditableCell = ({ getValue, row, column, table }) => {
             px-3 py-2
             rounded-md
             outline-none
-            focus:ring-2
-           focus:ring-sky"
+            focus:ring-1
+           dark:focus:ring-sky
+           focus:ring-gray-950"
         />
     )
 }

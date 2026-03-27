@@ -1,12 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 
-import RoundButton from "../ui/RoundButton";
-import SelectedDataset from "../features/SelectedDataset";
-import CenterPortal from "../portals/CenterPortal";
-import { MODALS } from "../constants/modalTypes";
+import SelectedDataset from "../SelectedDataset";
+import UploadButton from "../UploadButton";
 
 const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
-  const [currentModal, setCurrentModal] = useState(null);
 
   const datasets = [
     {
@@ -23,36 +20,25 @@ const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
     <div className="flex flex-col gap-2 rounded-md px-8 py-4 bg-white dark:bg-midnight">
       <h1 className="text-lg font-semibold"> Quick Actions: </h1>
       <div className="flex flex-col gap-2 items-center">
-        <RoundButton
-          className="bg-sky text-white w-full"
-          onClick={() => setCurrentModal(MODALS.CSV)}
+        <UploadButton
+          onUpload={onUpload}
+          onManualSubmit={onManualSubmit}
+          setUploadFiles={setUploadFiles}
+          className="w-full"
         >
-          Upload CSV
-        </RoundButton>
+          Upload File
+        </UploadButton>
 
-        <RoundButton
-          className="bg-gray-200 dark:bg-pitch w-full"
-          onClick={() => setCurrentModal(MODALS.EXCEL)}
-        >
-          Upload Excel
-        </RoundButton>
-
-        <RoundButton
+        {/* <RoundButton
           className="bg-gray-200 dark:bg-pitch w-full"
           onClick={() => setCurrentModal(MODALS.MANUAL)}
         >
           Manual Entry
-        </RoundButton>
+        </RoundButton> */}
+
       </div>
       <SelectedDataset datasets={datasets} />
-      <CenterPortal
-        open={currentModal !== null}
-        onClose={() => setCurrentModal(null)}
-        currentModal={currentModal}
-        onUpload={onUpload}
-        onManualSubmit={onManualSubmit}
-        setUploadFiles={setUploadFiles}
-      />
+
     </div>
   );
 };

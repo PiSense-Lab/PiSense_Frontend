@@ -8,10 +8,10 @@ import { LuLayoutTemplate, LuChartLine, LuSettings } from "react-icons/lu";
 const Sidebar = () => {
   const SIDEBAR_LINKS = [
     { id: 1, path: "/", name: "Dashboard", icon: LuLayoutTemplate },
-    { id: 2, path: "/campaign", name: "Campaign", icon: LuChartLine },
+    { id: 2, path: "/data", name: "Data", icon: LuChartLine },
   ];
   return (
-    <div className="flex flex-col w-16 md:w-56 fixed left-0 top-0 z-10 h-screen pt-8 px-4 bg-white dark:bg-midnight">
+    <div className="flex flex-col w-16 md:w-56 fixed left-0 top-0 z-50 h-screen pt-8 px-4 bg-white dark:bg-midnight">
       {/* LOGO */}
       <NavLink to="/" end className="mb-8 block">
         <img
@@ -22,7 +22,7 @@ const Sidebar = () => {
         <img
           src="/Logo-dark.svg"
           alt="logo"
-          className="w-36 ml-2 hidden md:hidden dark:flex"
+          className="w-36 ml-2 hidden md:hidden md:dark:flex"
         />
         <img src="/Logo-mini.svg" alt="logo" className="w-12 flex md:hidden" />
       </NavLink>

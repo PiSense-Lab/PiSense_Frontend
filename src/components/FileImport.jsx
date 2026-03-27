@@ -1,15 +1,14 @@
 import React, { useState, useRef } from "react";
 import ReactDom from "react-dom";
-import RoundButton from "../ui/RoundButton";
+import RoundButton from "./RoundButton";
 
 import { RxCross2 } from "react-icons/rx";
 import { SlCloudUpload } from "react-icons/sl";
-import { uploadData } from "../../api/timeseries";
+import { uploadData } from "../api/timeseries";
 
 const FileImport = ({
   open,
   onClose,
-  currentModal,
   onUpload,
   setUploadFiles,
 }) => {
@@ -19,12 +18,6 @@ const FileImport = ({
   const dragCounter = useRef(0); // Counter to handle nested drag events
   // State to store upload status messages for user feedback
   const [uploadStatus, setUploadStatus] = useState("");
-
-  const modalTitles = {
-    UPLOAD_CSV: "Upload CSV",
-    UPLOAD_EXCEL: "Upload Excel",
-    MANUAL_ENTRY: "Manual Entry",
-  };
 
   if (!open) return null;
 
@@ -97,28 +90,23 @@ const FileImport = ({
           fileName.endsWith(".xlsx") ||
           fileType === "application/vnd.ms-excel" ||
           fileType ===
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
         // Determine expected type from modal
-        const expectedType = currentModal.toLowerCase().includes("csv")
-          ? "csv"
-          : "excel";
-
-        if (expectedType === "csv" && !isCSV) {
-          throw new Error(`${file.name} is not a valid CSV file.`);
-        }
-
-        if (expectedType === "excel" && !isExcel) {
-          throw new Error(`${file.name} is not a valid Excel file.`);
+        if (!isCSV && !isExcel) {
+          throw new Error(`${file.name} must be a CSV or Excel file.`);
         }
       }
 
       setUploadStatus("Uploading...");
 
       for (const file of files) {
-        const type = currentModal.toLowerCase().includes("csv")
-          ? "csv"
-          : "excel";
+        const fileName = file.name.toLowerCase();
+
+        const type =
+          fileName.endsWith(".csv")
+            ? "csv"
+            : "excel";
 
         console.log(`Preparing to send: ${file.name} as type: ${type}`);
 
@@ -163,14 +151,13 @@ const FileImport = ({
     onClose();
   };
 
-  const acceptType = currentModal?.toLowerCase().includes("csv")
-    ? ".csv,text/csv"
-    : ".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  const acceptType =
+    ".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
   return ReactDom.createPortal(
     <>
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-1000 w-80 md:w-120 flex flex-col items-center rounded-md gap-4 px-8 py-6 bg-white dark:bg-midnight">
-        <h1 className="text-lg font-semibold">{modalTitles[currentModal]}</h1>
+        <h1 className="text-lg font-semibold">Upload File</h1>
         <div
           className={`border-2 border-dashed border-gray-300 rounded-lg p-10 w-full text-center cursor-pointer transition-all duration-100 ease-in min-h-50 flex items-center justify-center hover:bg-sky/10 hover:scale-102 ${isDragging ? "scale-105 bg-sky/10" : ""}`}
           onDragEnter={handleDragEnter}
@@ -194,7 +181,8 @@ const FileImport = ({
             {isDragging ? (
               <p>Drop files here</p>
             ) : (
-              <p>Browse files to upload</p>
+              <p>Drop CSV or Excel files here
+                or click to browse</p>
             )}
           </div>
         </div>
@@ -211,9 +199,8 @@ const FileImport = ({
           {/* Scrollable container */}
           {files.length > 0 && (
             <div
-              className={`h-auto max-h-25 gap-2 flex flex-col ${
-                files.length > 1 ? "h-25 overflow-y-scroll" : ""
-              }`}
+              className={`h-auto max-h-25 gap-2 flex flex-col ${files.length > 1 ? "h-25 overflow-y-scroll" : ""
+                }`}
             >
               {files.map((file, index) => (
                 <div

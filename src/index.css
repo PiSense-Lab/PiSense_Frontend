@@ -8,6 +8,13 @@
   --color-midnight: #151e36;
   --color-sky: #00a6f4;
 }
+.btn-secondary {
+  @apply px-4 py-1.5 rounded-lg text-sm font-medium border
+         border-slate-300 dark:border-slate-600
+         text-slate-500 dark:text-slate-400
+         hover:border-sky hover:text-sky
+         transition;
+}
 
 html,
 body {

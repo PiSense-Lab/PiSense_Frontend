@@ -1,9 +1,10 @@
 import React, { useState, useRef } from "react";
 import ReactDom from "react-dom";
 import { RxCross2 } from "react-icons/rx";
-import { submitManualData } from "../api/timeseries";
 import SubmitModal from "./SubmitModal";
 import DATA from "../data.js";
+
+import { submitManualData } from "../api/timeseries.js";
 
 const DEFAULT_COL_WIDTH = 180;
 const ROW_NUM_WIDTH = 52;
@@ -25,27 +26,22 @@ const transformDataToTable = (data) => {
   // Create rows
   const rows = data.map((item, ri) => {
     const cells = {};
-
     columns.forEach((col, ci) => {
       cells[col.id] = item[keys[ci]] ?? "";
     });
-
-    return {
-      id: `row-${ri}`,
-      cells,
-    };
+    return { id: `row-${ri}`, cells };
   });
 
   return { columns, rows };
 };
 
-const Spreadsheet = ({ open, onClose, darkMode = false }) => {
-  const { columns: initialColumns, rows: initialRows } =
-    transformDataToTable(DATA);
-
-  const [columns, setColumns] = useState(initialColumns);
-  const [rows, setRows] = useState(initialRows);
-
+const Spreadsheet = ({
+  open,
+  onClose = () => {},
+  mode = "create",
+  existingDatasetId = null,
+  initialData = null,
+}) => {
   const [selectedCell, setSelectedCell] = useState(null);
   const [editingHeader, setEditingHeader] = useState(null);
   const [status, setStatus] = useState("");
@@ -57,65 +53,110 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
   const startX = useRef(null);
   const startWidth = useRef(null);
 
+  // ─────────────────────────────────────────────
+  // Initialize table based on mode
+  // ─────────────────────────────────────────────
+  function getInitialTableState(mode, existingDatasetId, initialData) {
+    const defaultColumns = [
+      { id: "col-0", name: "Column 1", width: DEFAULT_COL_WIDTH },
+    ];
+    const defaultRows = Array.from({ length: 10 }, (_, i) => ({
+      id: `row-${i}`,
+      cells: { "col-0": "" },
+    }));
+
+    // Prefer server data if provided
+    if (mode === "edit" && initialData) {
+      return transformDataToTable(initialData);
+    }
+
+    // Fallback to local DATA file
+    if (mode === "edit" && existingDatasetId != null) {
+      const dataset = DATA.find((d) => d.id === existingDatasetId);
+      if (dataset?.rowsData) {
+        return transformDataToTable(dataset.rowsData);
+      }
+    }
+
+    return { columns: defaultColumns, rows: defaultRows };
+  }
+
+  const [{ columns, rows }, setTableState] = useState(() =>
+    getInitialTableState(mode, existingDatasetId, initialData),
+  );
+
   if (!open) return null;
 
   // ─────────────────────────────────────────────
   // Handlers
   // ─────────────────────────────────────────────
-
   const handleCellChange = (rowId, colId, value) => {
-    setRows((prev) =>
-      prev.map((r) =>
+    setTableState((prev) => ({
+      ...prev,
+      rows: prev.rows.map((r) =>
         r.id === rowId ? { ...r, cells: { ...r.cells, [colId]: value } } : r,
       ),
-    );
+    }));
   };
-
   const commitHeader = (colId, value) => {
-    setColumns((cols) =>
-      cols.map((c) => (c.id === colId ? { ...c, name: value || c.name } : c)),
-    );
+    setTableState((prev) => ({
+      ...prev,
+      columns: prev.columns.map((c) =>
+        c.id === colId ? { ...c, name: value || c.name } : c,
+      ),
+    }));
     setEditingHeader(null);
   };
 
   const addColumn = () => {
     const id = `col-${Date.now()}`;
-    setColumns((cols) => [
-      ...cols,
-      { id, name: `Column ${cols.length + 1}`, width: DEFAULT_COL_WIDTH },
-    ]);
+    setTableState((prev) => ({
+      ...prev,
+      columns: [
+        ...prev.columns,
+        {
+          id,
+          name: `Column ${prev.columns.length + 1}`,
+          width: DEFAULT_COL_WIDTH,
+        },
+      ],
+    }));
   };
 
   const deleteColumn = (colId) => {
     if (columns.length <= 1) return;
-
-    setColumns((cols) => cols.filter((c) => c.id !== colId));
-    setRows((prev) =>
-      prev.map((r) => {
+    setTableState((prev) => ({
+      columns: prev.columns.filter((c) => c.id !== colId),
+      rows: prev.rows.map((r) => {
         const cells = { ...r.cells };
         delete cells[colId];
         return { ...r, cells };
       }),
-    );
+    }));
   };
 
   const addRows = (count = 10) => {
-    setRows((prev) => [
+    setTableState((prev) => ({
       ...prev,
-      ...Array.from({ length: count }, (_, i) => ({
-        id: `row-${Date.now()}-${i}`,
-        cells: {},
-      })),
-    ]);
+      rows: [
+        ...prev.rows,
+        ...Array.from({ length: count }, (_, i) => ({
+          id: `row-${Date.now()}-${i}`,
+          cells: {},
+        })),
+      ],
+    }));
   };
 
   const deleteRow = (rowId) =>
-    setRows((prev) => prev.filter((r) => r.id !== rowId));
+    setTableState((prev) => ({
+      ...prev,
+      rows: prev.rows.filter((r) => r.id !== rowId),
+    }));
 
   // ─────────────────────────────────────────────
-  // Resize logic (kept same)
+  // Resize logic
   // ─────────────────────────────────────────────
-
   const onResizeMouseDown = (e, colId) => {
     e.preventDefault();
     resizingCol.current = colId;
@@ -125,13 +166,14 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
 
     const onMove = (ev) => {
       const delta = ev.clientX - startX.current;
-      setColumns((cols) =>
-        cols.map((c) =>
+      setTableState((prev) => ({
+        ...prev,
+        columns: prev.columns.map((c) =>
           c.id === colId
             ? { ...c, width: Math.max(80, startWidth.current + delta) }
             : c,
         ),
-      );
+      }));
     };
 
     const onUp = () => {
@@ -145,12 +187,11 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
   };
 
   // ─────────────────────────────────────────────
-  // Submit
+  // Placeholder save/submit
   // ─────────────────────────────────────────────
-
   const handleConfirm = async ({ datasetName, datasetType }) => {
     setShowConfirm(false);
-    setStatus("Saving…");
+    setStatus(mode === "create" ? "Submitting…" : "Saving…");
 
     const cleanData = rows
       .filter((r) =>
@@ -164,32 +205,43 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
         return obj;
       });
 
-    const result = await submitManualData({
-      datasetName,
-      datasetType,
-      rows: cleanData,
-    });
+    if (mode === "create") {
+      const result = await submitManualData({
+        datasetName,
+        datasetType,
+        rows: cleanData,
+      });
 
-    if (result.success) {
-      setStatus("✅ Dataset saved!");
-      setTimeout(() => {
-        onClose();
-        setStatus("");
-      }, 1500);
+      if (result.success === false) {
+        setStatus(`❌ Error: ${result.message}`);
+        return;
+      }
+
+      setStatus("✅ Dataset submitted!");
     } else {
-      setStatus(`❌ ${result.message}`);
+      // TODO: wire up save/edit endpoint when ready
+      console.log("Dataset ready to save:", {
+        datasetName,
+        datasetType,
+        rows: cleanData,
+      });
+      setStatus("✅ Changes saved!");
     }
+
+    setTimeout(() => {
+      onClose();
+      setStatus("");
+    }, 1000);
   };
 
   const totalGridWidth =
     ROW_NUM_WIDTH + columns.reduce((s, c) => s + c.width, 0) + 44;
 
   // ─────────────────────────────────────────────
-  // UI
+  // Render
   // ─────────────────────────────────────────────
-
   return ReactDom.createPortal(
-    <div className={darkMode ? "dark" : ""}>
+    <div>
       {/* Overlay */}
       <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose} />
 
@@ -198,7 +250,9 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 dark:bg-slate-900">
           <div>
-            <h2 className="font-bold text-lg">Edit Dataset</h2>
+            <h2 className="font-bold text-lg">
+              {mode === "create" ? "New Dataset" : "Edit Dataset"}
+            </h2>
             <p className="text-sm text-slate-400">
               Add or edit rows below ·{" "}
               <span className="text-sky">double-click a header</span> to rename
@@ -221,7 +275,6 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
           <button onClick={addColumn} className="btn-secondary">
             + Add Column
           </button>
-
           <div className="ml-auto text-sm text-slate-400">
             {rows.length} rows · {columns.length} columns
           </div>
@@ -241,18 +294,15 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
               <col style={{ width: 44 }} />
             </colgroup>
 
-            {/* HEADERS */}
             <thead>
               <tr>
                 <th className="sticky top-0 left-0 z-30 bg-slate-100 dark:bg-slate-800" />
-
                 {columns.map((col) => (
                   <th
                     key={col.id}
                     className="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800 group"
                   >
                     <div className="flex items-center h-9 relative">
-                      {/* Header Text */}
                       {editingHeader === col.id ? (
                         <input
                           ref={headerInputRef}
@@ -275,29 +325,20 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
                         </span>
                       )}
 
-                      {/* Delete */}
                       <button
                         onClick={() => deleteColumn(col.id)}
-                        className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 text-red-400 rounded hover:bg-red-200 text-xs"
+                        className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 text-red-400 rounded hover:bg-red-100 text-xs"
                       >
                         <RxCross2 size={18} />
                       </button>
 
-                      {/* Resize */}
                       <div
                         onMouseDown={(e) => onResizeMouseDown(e, col.id)}
-                        className={`
-                            absolute right-0 top-0 h-full w-1 cursor-col-resize
-                            transition-colors
-                            hover:bg-sky
-                            ${resizingColumnId === col.id ? "bg-sky" : ""}
-                        `}
+                        className={`absolute right-0 top-0 h-full w-1 cursor-col-resize transition-colors hover:bg-sky ${resizingColumnId === col.id ? "bg-sky" : ""}`}
                       />
                     </div>
                   </th>
                 ))}
-
-                {/* Add column */}
                 <th className="sticky top-0 z-20 w-11 bg-slate-100 dark:bg-slate-800">
                   <button
                     onClick={addColumn}
@@ -309,7 +350,6 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
               </tr>
             </thead>
 
-            {/* BODY */}
             <tbody>
               {rows.map((row, ri) => (
                 <tr key={row.id}>
@@ -322,26 +362,17 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
                   >
                     {ri + 1}
                   </td>
-
                   {columns.map((col) => {
                     const isSel =
                       selectedCell?.rowId === row.id &&
                       selectedCell?.colId === col.id;
-
                     return (
                       <td
                         key={col.id}
                         onClick={() =>
-                          setSelectedCell({
-                            rowId: row.id,
-                            colId: col.id,
-                          })
+                          setSelectedCell({ rowId: row.id, colId: col.id })
                         }
-                        className={`border border-slate-200 ${
-                          ri % 2 === 0
-                            ? "bg-white dark:bg-midnight"
-                            : "bg-slate-50 dark:bg-slate-900"
-                        } ${isSel && " outline-2 outline-sky"}`}
+                        className={`border border-slate-200 ${ri % 2 === 0 ? "bg-white dark:bg-midnight" : "bg-slate-50 dark:bg-slate-900"} ${isSel && "ring-2 ring-sky-500 ring-inset"}`}
                       >
                         <input
                           value={row.cells[col.id] ?? ""}
@@ -376,24 +407,33 @@ const Spreadsheet = ({ open, onClose, darkMode = false }) => {
         <div className="flex justify-between px-6 py-3 border-t border-slate-200 bg-slate-50 dark:bg-slate-900">
           <span className="text-sm text-sky">{status}</span>
           <div className="flex gap-3">
-            <button onClick={onClose} className="btn-secondary">
+            <button onClick={onClose} className="btn-secondary-cancel">
               Cancel
             </button>
             <button
-              onClick={() => setShowConfirm(true)}
+              onClick={() => {
+                if (mode === "create") {
+                  setShowConfirm(true); // open modal only for create
+                } else {
+                  handleConfirm({
+                    datasetName: "Existing",
+                    datasetType: "Demo",
+                  }); // just save for edit
+                }
+              }}
               className="px-6 py-2 rounded-lg bg-sky text-white font-bold hover:opacity-90"
             >
-              Submit
+              {mode === "create" ? "Submit" : "Save Changes"}
             </button>
           </div>
         </div>
       </div>
 
-      {showConfirm && (
+      {/* Only show SubmitModal for create mode */}
+      {mode === "create" && showConfirm && (
         <SubmitModal
           columns={columns}
           rows={rows}
-          darkMode={darkMode}
           onConfirm={handleConfirm}
           onBack={() => setShowConfirm(false)}
         />

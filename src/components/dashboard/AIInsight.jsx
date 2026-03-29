@@ -1,5 +1,5 @@
 import React from "react";
-import RoundButton from "../ui/RoundButton";
+import RoundButton from "../RoundButton";
 
 const AIInsight = () => {
   return (
@@ -8,7 +8,6 @@ const AIInsight = () => {
         <h1 className="text-lg font-semibold"> AI Insight </h1>
         <p className="text-xs underline cursor-pointer">View Full Insight</p>
       </div>
-
       <p className="text-s">
         “Temperature has increased by 12% the last month.”
       </p>

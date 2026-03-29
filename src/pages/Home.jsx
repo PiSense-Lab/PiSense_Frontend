@@ -4,7 +4,7 @@ import Graph from "../components/dashboard/Graph";
 import QuickActions from "../components/dashboard/QuickActions";
 import AIInsight from "../components/dashboard/AIInsight";
 import SystemMonitor from "../components/dashboard/SystemMonitor";
-import { uploadData, getProcessedData } from "../api/timeseries";
+import { uploadData, getTable } from "../api/timeseries";
 
 const Home = () => {
   const [manualData, setManualData] = useState("");

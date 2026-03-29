@@ -2,22 +2,50 @@
 import BASE_URL from "./base_url";
 
 // UPLOAD DATA
-export const uploadData = async (file, type) => {
+export const uploadData = async (
+  file,
+  type,
+  datasetName = null,
+  userId = 1,
+  projectId = 1,
+) => {
   try {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("type", type);
 
-    const response = await fetch(`${BASE_URL}/api/upload`, {
+    let url;
+
+    if (type === "csv") {
+      // If datasetName exists, use it; otherwise take the file name and remove extension
+      const tableName = datasetName ?? file.name.replace(/\.[^/.]+$/, "");
+      const params = new URLSearchParams({
+        table_name: tableName,
+        user_id: userId,
+        project_id: projectId,
+      });
+      url = `${BASE_URL}/datatables/upload_csv/?${params}`;
+    } else {
+      // Excel — backend derives table name from file
+      const params = new URLSearchParams({
+        user_id: userId,
+        project_id: projectId,
+      });
+      url = `${BASE_URL}/datatables/upload_excel/?${params}`;
+    }
+
+    const response = await fetch(url, {
       method: "POST",
       body: formData,
+      // Dont set Content-Type — browser sets multipart boundary automatically
     });
-    if (!response.ok) {
+
+    if (!response.ok)
       throw new Error(`Server responded with status ${response.status}`);
-    }
-    return await response.json();
+
+    const data = await response.json();
+    return { success: true, message: data };
   } catch (error) {
-    console.error("Error uploading data:", error);
+    console.error(`Error uploading ${type} file:`, error);
     return { success: false, message: error.message };
   }
 };

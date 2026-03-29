@@ -50,13 +50,12 @@ export const uploadData = async (
       body: formData,
       // Dont set Content-Type — browser sets multipart boundary automatically
     });
-
-    if (!response.ok)
+    if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
-
-    const data = await response.json();
-    return { success: true, message: data };
+    }
+    return await response.json();
   } catch (error) {
+    console.error(`Error uploading ${type} file:`, error);
     console.error(`Error uploading ${type} file:`, error);
     return { success: false, message: error.message };
   }

@@ -2,20 +2,48 @@
 import BASE_URL from "./base_url";
 
 // UPLOAD DATA
-export const uploadData = async (file, type) => {
+export const uploadData = async (
+  file,
+  type,
+  datasetName = null,
+  userId = 1,
+  projectId = 1,
+) => {
   try {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("type", type);
 
-    const response = await fetch(`${BASE_URL}/api/upload`, {
+    let url;
+
+    if (type === "csv") {
+      // If datasetName exists, use it; otherwise take the file name and remove extension
+      const tableName = datasetName ?? file.name.replace(/\.[^/.]+$/, "");
+      const params = new URLSearchParams({
+        table_name: tableName,
+        user_id: userId,
+        project_id: projectId,
+      });
+      url = `${BASE_URL}/datatables/upload_csv/?${params}`;
+    } else {
+      // Excel — backend derives table name from file
+      const params = new URLSearchParams({
+        user_id: userId,
+        project_id: projectId,
+      });
+      url = `${BASE_URL}/datatables/upload_excel/?${params}`;
+    }
+
+    const response = await fetch(url, {
       method: "POST",
       body: formData,
+      // Dont set Content-Type — browser sets multipart boundary automatically
     });
-    if (!response.ok) {
+
+    if (!response.ok)
       throw new Error(`Server responded with status ${response.status}`);
-    }
-    return await response.json();
+
+    const data = await response.json();
+    return { success: true, message: data };
   } catch (error) {
     console.error("Error uploading data:", error);
     return { success: false, message: error.message };
@@ -27,18 +55,26 @@ export const uploadData = async (file, type) => {
 // - datasetName: string — user-provided name for the dataset
 // - datasetType: string — category e.g. "weather", "sensor", "custom label"
 // - rows: array of objects — each object is a row keyed by column name
-export const submitManualData = async ({ datasetName, datasetType, rows }) => {
+export const submitManualData = async ({ datasetName, rows }) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/manual-data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ datasetName, datasetType, rows }),
+    const params = new URLSearchParams({
+      table_name: datasetName,
+      json_in: JSON.stringify(rows),
     });
+
+    const response = await fetch(
+      `${BASE_URL}/datatables/upload_manual?${params}`,
+      {
+        method: "POST",
+      },
+    );
+
     if (!response.ok) {
+      const errorDetail = await response.json();
+      console.log("Error detail:", errorDetail);
       throw new Error(`Server responded with status ${response.status}`);
     }
+
     return await response.json();
   } catch (error) {
     console.error("Error submitting manual data:", error);
@@ -46,23 +82,17 @@ export const submitManualData = async ({ datasetName, datasetType, rows }) => {
   }
 };
 
-// FETCH PROCESSED DATA FROM BACKEND
-export const getProcessedData = async (dataType, startDate, endDate) => {
+// Fetch a table from backend
+export const getTable = async (tableName) => {
   try {
-    // NOTE: GET requests cannot have a body — params passed as query string instead
-    const params = new URLSearchParams({ dataType, startDate, endDate });
-    const response = await fetch(`${BASE_URL}/api/processed-data?${params}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(`${BASE_URL}/datatables/${tableName}`);
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
-    return await response.json();
+    const json = await response.json();
+    return json.data;
   } catch (error) {
-    console.error("Error fetching processed data:", error);
-    return { success: false, message: error.message };
+    console.error("Error fetching table:", error);
+    return null;
   }
 };

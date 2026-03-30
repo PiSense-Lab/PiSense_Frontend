@@ -196,7 +196,7 @@ const SubmitModal = ({ columns, rows, onConfirm, onBack }) => {
             onClick={onBack}
             className="px-5 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-midnight text-slate-400 hover:text-sky hover:border-sky transition"
           >
-            Back to Grid
+            Back
           </button>
 
           <button

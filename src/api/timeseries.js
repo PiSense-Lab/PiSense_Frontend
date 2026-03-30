@@ -1,9 +1,10 @@
 // CENTRALIZED API HELPER FOR FRONTEND
 import BASE_URL from "./base_url";
 
+
 // FILE UPLOAD 
 //  uploadData(file, type)  where type is "csv" or "excel"
-// CSV:   POST /datatables/upload_csv/
+// CSV:  POST /datatables/upload_csv/
 //  - query → table_name, user_id, project_id
 //  - body  → multipart file
 //
@@ -27,8 +28,8 @@ export const uploadData = async (file, type, datasetName = null, datasetType = n
       const params    = new URLSearchParams({ table_name: tableName, user_id: userId, project_id: projectId });
       url = `${BASE_URL}/datatables/upload_csv/?${params}`;
     } else {
-      // Excel — backend derives table name from file
-      const params = new URLSearchParams({ user_id: userId, project_id: projectId });
+      const tableName = datasetName ?? file.name.replace(/\.[^/.]+$/, "");
+      const params = new URLSearchParams({ table_name: tableName, user_id: userId, project_id: projectId });
       url = `${BASE_URL}/datatables/upload_excel/?${params}`;
     }
  

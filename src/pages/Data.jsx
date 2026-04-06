@@ -9,7 +9,7 @@ import { getTable } from "../api/timeseries";
 const datasetsMeta = [
   {
     id: 1,
-    name: "timeseries_data",
+    name: "ExampleData",
     type: "Energy",
     lastModified: "2026-03-01",
   },

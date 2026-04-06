@@ -9,7 +9,7 @@ export default function ChartPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${BASE_URL}/weather/forecast-weather/daily?forecast_days=9`);
+        const res = await fetch(`${BASE_URL}/datatables/ExampleData`);
         const json = await res.json();
         setData(json);
       } catch (err) {

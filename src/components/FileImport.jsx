@@ -6,12 +6,7 @@ import { RxCross2 } from "react-icons/rx";
 import { SlCloudUpload } from "react-icons/sl";
 import { uploadData } from "../api/timeseries";
 
-const FileImport = ({
-  open,
-  onClose,
-  onUpload,
-  setUploadFiles,
-}) => {
+const FileImport = ({ open, onClose, onUpload, setUploadFiles }) => {
   const [isDragging, setIsDragging] = useState(false); // Track drag state
   const [files, setFiles] = useState([]); // Store multiple files
   const fileInputRef = useRef(null); // Reference to hidden input element
@@ -90,7 +85,7 @@ const FileImport = ({
           fileName.endsWith(".xlsx") ||
           fileType === "application/vnd.ms-excel" ||
           fileType ===
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
         // Determine expected type from modal
         if (!isCSV && !isExcel) {
@@ -103,10 +98,7 @@ const FileImport = ({
       for (const file of files) {
         const fileName = file.name.toLowerCase();
 
-        const type =
-          fileName.endsWith(".csv")
-            ? "csv"
-            : "excel";
+        const type = fileName.endsWith(".csv") ? "csv" : "excel";
 
         console.log(`Preparing to send: ${file.name} as type: ${type}`);
 
@@ -181,8 +173,7 @@ const FileImport = ({
             {isDragging ? (
               <p>Drop files here</p>
             ) : (
-              <p>Drop CSV or Excel files here
-                or click to browse</p>
+              <p>Drop CSV or Excel files here or click to browse</p>
             )}
           </div>
         </div>
@@ -199,8 +190,9 @@ const FileImport = ({
           {/* Scrollable container */}
           {files.length > 0 && (
             <div
-              className={`h-auto max-h-25 gap-2 flex flex-col ${files.length > 1 ? "h-25 overflow-y-scroll" : ""
-                }`}
+              className={`h-auto max-h-25 gap-2 flex flex-col ${
+                files.length > 1 ? "h-25 overflow-y-scroll" : ""
+              }`}
             >
               {files.map((file, index) => (
                 <div

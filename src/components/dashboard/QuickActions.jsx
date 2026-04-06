@@ -4,7 +4,6 @@ import SelectedDataset from "../SelectedDataset";
 import UploadButton from "../UploadButton";
 
 const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
-
   const datasets = [
     {
       id: 1,
@@ -35,10 +34,8 @@ const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
         >
           Manual Entry
         </RoundButton> */}
-
       </div>
       <SelectedDataset datasets={datasets} />
-
     </div>
   );
 };

@@ -5,7 +5,6 @@ import {
   XAxis, 
   YAxis, 
   ResponsiveContainer,
-  Legend,
   Tooltip
 } from 'recharts';
 import { useState } from 'react';
@@ -13,9 +12,17 @@ import { buildTimeSeries } from '../../api/charting';
 
 export function GenerateLineChart({ jsonData }) {
   const result = buildTimeSeries(jsonData);
-  const [hidden, setHidden] = useState({});
+  // print data to frontend console for debugging
+  console.log('Chart data:', result);
+  const [selectedMetric, setSelectedMetric] = useState(
+    result?.metricKeys?.[0] || ""
+  );
+  const metricKeys = result?.metricKeys || [];
+  const currentMetric = metricKeys.includes(selectedMetric)
+    ? selectedMetric
+    : metricKeys[0] || "";
 
-  if (!result) {
+  if (!result || metricKeys.length === 0) {
     return <div>No valid time-series data found.</div>;
   }
 
@@ -26,46 +33,59 @@ export function GenerateLineChart({ jsonData }) {
       .replace(/\b\w/g, c => c.toUpperCase());
 
   return (
-    <ResponsiveContainer width="100%" height={400}>
-      <LineChart data={result.data}>
-        <CartesianGrid strokeDasharray="5 5" />
+    <>
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <label htmlFor="metric-select" style={{ fontWeight: 600 }}>
+          Select metric:
+        </label>
+        <select
+          id="metric-select"
+          value={currentMetric}
+          onChange={(e) => setSelectedMetric(e.target.value)}
+          style={{ padding: '6px 10px', minWidth: 180 }}
+        >
+          {result.metricKeys.map((key) => (
+            <option key={key} value={key}>
+              {result.labels?.[key] || formatLabel(key)}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        <XAxis
-          dataKey="time"
-          tickFormatter={(t) => new Date(t).toLocaleDateString()}
-        />
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart data={result.data}>
+          <CartesianGrid strokeDasharray="5 5" />
 
-        <YAxis />
+          <XAxis
+            dataKey="time"
+            tickFormatter={(t) => new Date(t).toLocaleDateString()}
+          />
 
-        <Tooltip
-          labelFormatter={(label) =>
-            new Date(label).toLocaleDateString()
-          }
-        />
+          <YAxis
+            label={{
+              value: formatLabel(currentMetric),
+              angle: -90,
+              position: 'insideLeft',
+              offset: 10,
+            }}
+          />
 
-        <Legend
-          onClick={(e) => {
-            const key = e.dataKey;
-            setHidden(prev => ({
-              ...prev,
-              [key]: !prev[key]
-            }));
-          }}
-        />
+          <Tooltip
+            labelFormatter={(label) =>
+              new Date(label).toLocaleDateString()
+            }
+          />
 
-        {result.metricKeys.map((key, index) =>
-          !hidden[key] && (
-            <Line
-              key={key}
-              type="monotone"
-              dataKey={key}
-              name={result.labels?.[key] || formatLabel(key)} // 👈 legend label
-              stroke={`hsl(${index * 60}, 70%, 50%)`}
-              dot={false}
-            />
-          )
-        )}
-      </LineChart>
-    </ResponsiveContainer>
+          <Line
+            key={currentMetric}
+            type="monotone"
+            dataKey={currentMetric}
+            name={result.labels?.[currentMetric] || formatLabel(currentMetric)}
+            stroke="hsl(210, 70%, 50%)"
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+// Charting data builder
 export function buildTimeSeries(json) {
   const data = extractArray(json);
   if (!data || data.length === 0) return null;
@@ -47,7 +48,7 @@ function extractArray(json) {
 
   return null;
 }
-
+// Heuristic time field detection
 function detectTime(data) {
   const sample = data.slice(0, 20);
   const keys = Object.keys(sample[0]);

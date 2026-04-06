@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import Home from "./pages/Home";
@@ -8,28 +8,15 @@ import Signin from "./pages/Signin";
 import Signup from "./pages/Signup";
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem("token"));
-
   return (
     <BrowserRouter>
       <Routes>
         {/* Public routes */}
-        <Route
-          path="/signin"
-          element={token ? <Navigate to="/" /> : <Signin setToken={setToken} />}
-        />
-        <Route
-          path="/signup"
-          element={token ? <Navigate to="/" /> : <Signup setToken={setToken} />}
-        />
+        <Route path="/signin" element={<Signin />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            token ? <Layout setToken={setToken} /> : <Navigate to="/signin" />
-          }
-        >
+        <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="data" element={<Data />} />
           <Route path="settings" element={<Settings />} />

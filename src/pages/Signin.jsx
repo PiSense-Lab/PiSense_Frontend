@@ -1,25 +1,31 @@
 import React, { useState } from "react";
 import RoundButton from "../components/RoundButton";
-import { loginUser } from "../api/auth";
+import { getToken } from "../api/auth";
+import { useNavigate } from "react-router-dom";
 
-function Signin({ setToken }) {
-  const [formData, setFormData] = useState({ username: "", password: "" });
-  const [errors, setErrors] = useState({});
+function Signin() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    setErrors((prev) => ({ ...prev, general: undefined }));
+  const navigate = useNavigate();
+
+  const validateForm = () => {
+    if (!username || !password) {
+      setError("Username and password are required");
+      return false;
+    }
+    setError("");
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const data = await loginUser(formData.username, formData.password);
-      localStorage.setItem("token", data.access_token);
-      setToken(data.access_token);
-    } catch (err) {
-      setErrors({ general: err.message });
-    }
+    if (!validateForm()) return;
+    setLoading(true);
+
+    getToken(username, password, setLoading, setError, navigate);
   };
 
   return (
@@ -54,10 +60,8 @@ function Signin({ setToken }) {
                     id="username"
                     name="username"
                     type="text"
-                    required
-                    autoComplete="username"
-                    value={formData.username}
-                    onChange={handleChange}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="block w-full rounded-md bg-slate-200 dark:bg-pitch px-3 py-1.5 text-base dark:text-white placeholder:text-gray-500 outline-none focus:ring-1 ring-sky sm:text-sm/6"
                   />
                 </div>
@@ -71,41 +75,32 @@ function Signin({ setToken }) {
                   >
                     Password
                   </label>
-                  {/* <div className="text-sm">
-                    <a
-                      href="#"
-                      className="font-semibold text-sky hover:text-sky"
-                    >
-                      Forgot password?
-                    </a>
-                  </div> */}
                 </div>
                 <div className="mt-2">
                   <input
                     id="password"
                     name="password"
                     type="password"
-                    required
-                    autoComplete="current-password"
-                    value={formData.password}
-                    onChange={handleChange}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="block w-full rounded-md bg-slate-200 dark:bg-pitch px-3 py-1.5 text-base dark:text-white placeholder:text-gray-500 outline-none focus:ring-1 ring-sky sm:text-sm/6"
                   />
                 </div>
               </div>
 
-              <p className="text-xs text-red-500 text-center">
-                {errors.general ?? ""}
-              </p>
-
               <div>
                 <RoundButton
                   type="submit"
+                  disabled={loading}
                   className="bg-sky text-white w-full mt-8"
                 >
-                  Sign In
+                  {loading ? "Signing in..." : "Sign-in"}
                 </RoundButton>
               </div>
+
+              {error && (
+                <p className="text-xs text-red-500 text-center">{error}</p>
+              )}
             </form>
 
             <p className="mt-6 text-center text-sm/6 text-gray-400">

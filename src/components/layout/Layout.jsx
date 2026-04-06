@@ -1,16 +1,26 @@
-import React from "react";
+import { React, useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+import { verifyToken } from "../../api/auth";
 
-const Layout = ({ setToken }) => {
-  if (!open) return null;
+const Layout = () => {
+  const [checking, setChecking] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    verifyToken(token, navigate).finally(() => setChecking(false));
+  }, [navigate]);
+
+  if (checking) return null;
+
   return (
     <div className="flex">
       <Sidebar />
 
       <div className="w-full ml-16 md:ml-56 ">
-        <Header setToken={setToken} />
+        <Header />
 
         <div className="pt-22 px-4 pb-4 h-auto  ">
           <Outlet />

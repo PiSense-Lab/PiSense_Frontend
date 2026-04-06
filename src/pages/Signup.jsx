@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import RoundButton from "../components/RoundButton";
 
-function Signup({ setToken }) {
+function Signup() {
   const [formData, setFormData] = useState({
     username: "",
     password: "",

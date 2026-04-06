@@ -26,7 +26,9 @@ export const uploadData = async (
       url = `${BASE_URL}/datatables/upload_csv/?${params}`;
     } else {
       // Excel — backend derives table name from file
+      const tableName = datasetName ?? file.name.replace(/\.[^/.]+$/, "");
       const params = new URLSearchParams({
+        table_name: tableName,
         user_id: userId,
         project_id: projectId,
       });

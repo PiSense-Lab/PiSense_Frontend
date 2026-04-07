@@ -5,7 +5,7 @@ import Graph from "../components/dashboard/Graph";
 import QuickActions from "../components/dashboard/QuickActions";
 import AIInsight from "../components/dashboard/AIInsight";
 import SystemMonitor from "../components/dashboard/SystemMonitor";
-import SelectedProject from "../components/dashboard/SelectedProject";
+import SelectedProject from "../components/SelectedProject";
 import { uploadData, getTable } from "../api/timeseries";
 
 const Home = () => {

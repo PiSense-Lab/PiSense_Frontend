@@ -97,16 +97,40 @@ export const getTable = async (tableName) => {
   }
 };
 
+// src/api/projects.js
+
+// Hardcoded project data for now
 export const getProjects = async (name = null) => {
-  try{
-    const response = await fetch(`${BASE_URL}/datatables/projects${name ? `?name=${name}` : ""}`);
-    if (!response.ok) {
-      throw new Error(`Server responded with status ${response.status}`);
-    }
-    const json = await response.json();
-    return json.data;
-  } catch (error) {
-    console.error("Error fetching projects:", error);
-    return null;
+  const projects = [
+    {
+      project_id: "1",
+      project_name: "Weather",
+      last_update: "2026-02-13 14:30",
+      total_datasets: 1200,
+      anomalies: 4,
+    },
+    {
+      project_id: "2",
+      project_name: "Energy",
+      last_update: "2026-03-01 09:15",
+      total_datasets: 950,
+      anomalies: 2,
+    },
+    {
+      project_id: "3",
+      project_name: "Traffic",
+      last_update: "2026-04-05 18:00",
+      total_datasets: 720,
+      anomalies: 1,
+    },
+  ];
+
+  // Optional filtering by name
+  if (name) {
+    return projects.filter((p) =>
+      p.project_name.toLowerCase().includes(name.toLowerCase())
+    );
   }
+
+  return projects;
 };

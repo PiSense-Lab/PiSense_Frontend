@@ -1,7 +1,7 @@
 // SelectedProject.jsx
 import React, { useState, useEffect } from "react";
 import SmallContainer from "../components/dashboard/SmallContainer";
-import { getProjects } from "../api/projects"; // API call to your backend
+import { getProjects } from "../api/timeseries.js"; // API call to your backend
 
 const SelectedProject = ({ onProjectChange }) => {
   const [projects, setProjects] = useState([]);

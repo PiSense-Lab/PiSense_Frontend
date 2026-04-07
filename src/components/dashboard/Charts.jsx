@@ -10,6 +10,9 @@ import {
 import { useState } from 'react';
 import { buildTimeSeries } from '../../api/charting';
 
+// allow large view for user to see all the columns against the time but on separate charts
+
+
 export function GenerateLineChart({ jsonData }) {
   const result = buildTimeSeries(jsonData);
   // print data to frontend console for debugging

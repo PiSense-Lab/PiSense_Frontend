@@ -9,7 +9,8 @@ export default function ChartPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${BASE_URL}/datatables/ExampleData`);
+        //get the url from the user so that we get the correct data
+        const res = await fetch(`${BASE_URL}/datatables/timeseriesdata`);
         const json = await res.json();
         setData(json);
       } catch (err) {
@@ -24,6 +25,8 @@ export default function ChartPage() {
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>No data</div>;
+
+  // based on usr selection, pass the json data to bar chart or line or whatever chart
 
   return <GenerateLineChart jsonData={data} />;
 }

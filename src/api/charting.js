@@ -1,5 +1,6 @@
-// Charting data builder
 export function buildTimeSeries(json) {
+  //print the raw JSON to frontend console for debugging
+  console.log('Raw JSON input:', json);
   const data = extractArray(json);
   if (!data || data.length === 0) return null;
 
@@ -9,6 +10,8 @@ export function buildTimeSeries(json) {
   const metricKeys = detectNumericFields(data, timeConfig);
 
   const normalized = data.map(row => {
+    // print the row to frontend console for debugging
+    console.log('Processing row:', row);
     const time = buildTimestamp(row, timeConfig);
 
     const entry = { time };
@@ -48,7 +51,7 @@ function extractArray(json) {
 
   return null;
 }
-// Heuristic time field detection
+
 function detectTime(data) {
   const sample = data.slice(0, 20);
   const keys = Object.keys(sample[0]);
@@ -96,7 +99,8 @@ function buildTimestamp(row, config) {
   if (config.type === "composite") {
     return new Date(`${row.date}T${row.time}`).toISOString();
   }
-
+  //print row[config.key] to frontend console for debugging
+  console.log('Time value:', row[config.key]);
   return new Date(row[config.key]).toISOString();
 }
 

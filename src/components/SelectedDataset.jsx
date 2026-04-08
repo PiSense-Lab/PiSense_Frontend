@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Label,
   Listbox,
@@ -11,10 +11,6 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 
 const SelectedDataset = ({ datasets }) => {
   const [selected, setSelected] = useState(datasets[0]);
-
-  useEffect(() => {
-    console.log("Updated dataset:", selected);
-  }, [selected]);
 
   return (
     <Listbox value={selected} onChange={setSelected}>

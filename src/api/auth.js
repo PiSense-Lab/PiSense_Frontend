@@ -12,7 +12,7 @@ export async function getToken(
   formDetails.append("password", password);
 
   try {
-    const response = await fetch(`${BASE_URL}/token`, {
+    const response = await fetch(`${BASE_URL}/users/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: formDetails,
@@ -29,6 +29,7 @@ export async function getToken(
       setError(errorData.detail || "Authentication failed!");
     }
   } catch (error) {
+    console.error(error);
     setLoading(false);
     setError("An error occured. Please try again later.");
   }
@@ -40,14 +41,21 @@ export async function verifyToken(token, navigate) {
     return;
   }
 
-  console.log(token);
   try {
-    const response = await fetch(`${BASE_URL}/verify-token/${token}`);
+    const response = await fetch(`${BASE_URL}/users/verify-token`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!response.ok) {
       throw new Error("Token verification failed");
     }
   } catch (error) {
+    console.error(error);
     localStorage.removeItem("token");
     navigate("/signin");
   }

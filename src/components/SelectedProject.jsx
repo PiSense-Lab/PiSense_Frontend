@@ -1,4 +1,3 @@
-// SelectedProject.jsx
 import React, { useState, useEffect } from "react";
 import SmallContainer from "../components/dashboard/SmallContainer";
 import { getProjects } from "../api/timeseries.js"; // API call to your backend
@@ -6,7 +5,7 @@ import { getProjects } from "../api/timeseries.js"; // API call to your backend
 const SelectedProject = ({ onProjectChange }) => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-
+  // We want to change the datasets associated with the project when the project changes, for now we will just log it
   useEffect(() => {
     const fetchProjects = async () => {
       try {

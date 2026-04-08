@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import BASE_URL from "./base_url";
-import { GenerateLineChart } from '../components/dashboard/Charts';
+import BASE_URL from "../../api/base_url";
+import { GenerateLineChart } from './Charts';
 
 export default function ChartPage() {
   const [data, setData] = useState(null);

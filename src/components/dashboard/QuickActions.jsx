@@ -4,6 +4,7 @@ import SelectedDataset from "../SelectedDataset";
 import UploadButton from "../UploadButton";
 
 const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
+  // will get the dataset names from backend in the future, hardcoding for now
   const datasets = [
     {
       id: 1,
@@ -35,6 +36,7 @@ const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles }) => {
           Manual Entry
         </RoundButton> */}
       </div>
+      /* When data set is selected we want to change the visual to that data set */
       <SelectedDataset datasets={datasets} />
     </div>
   );

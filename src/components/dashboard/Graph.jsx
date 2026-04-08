@@ -1,6 +1,6 @@
 import React from "react";
 // import IndexLineChart from "./Charts";
-import ChartPage from "../../api/weather";
+import ChartPage from "./ChartPage";
 
 const Graph = (data) => {
   if (!data) return <div>No data yet</div>;

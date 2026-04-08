@@ -9,12 +9,13 @@ import {
 import { ChevronUpDownIcon } from "@heroicons/react/16/solid";
 import { CheckIcon } from "@heroicons/react/20/solid";
 
-const SelectedDataset = ({ datasets }) => {
+const SelectedDataset = ({ datasets, onChange }) => {
   const [selected, setSelected] = useState(datasets[0]);
-  // Here we want to update the graph and other components to reflect the selected dataset, for now we will just log it
+
   useEffect(() => {
     console.log("Updated dataset:", selected);
-  }, [selected]);
+    onChange?.(selected.name); // 🔥 send upward
+  }, [onChange, selected]);
 
   return (
     <Listbox value={selected} onChange={setSelected}>

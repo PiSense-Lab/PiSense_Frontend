@@ -134,3 +134,23 @@ export const getProjects = async (name = null) => {
 
   return projects;
 };
+
+export const getDatasetsForProject = async (projectId) => {
+  // Mock dataset list based on projectId
+  const datasets = {
+    "1": [
+      { id: "1", name: "timeseries_data" },
+      { id: "2", name: "timeseriesdata" },
+    ],
+    "2": [
+      { id: "3", name: "energy_jan_2026" },
+      { id: "4", name: "energy_feb_2026" },
+    ],
+    "3": [
+      { id: "5", name: "traffic_jan_2026" },
+      { id: "6", name: "traffic_feb_2026" },
+    ],
+  };
+
+  return datasets[projectId] || [];
+};

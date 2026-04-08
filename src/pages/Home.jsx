@@ -14,6 +14,7 @@ const Home = () => {
   const [processedData, setProcessedData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedDataset, setSelectedDataset] = useState(null); // or null
 
   const handleManualSubmit = async () => {
     setLoading(true);
@@ -36,13 +37,19 @@ const Home = () => {
       {/* Graph + QuickActions */}
       <div className="grid md:flex gap-4">
         <div className="flex-2">
-          <Graph data={processedData} projectId={selectedProject?.project_id} />
+          <Graph
+            data={processedData}
+            projectId={selectedProject?.project_id}
+            dataset={selectedDataset}
+          />
         </div>
         <div className="flex-1">
           <QuickActions
             onUpload={handleFileUpload}
             onManualSubmit={handleManualSubmit}
             setUploadFiles={setUploadFiles}
+            onDatasetChange={setSelectedDataset}
+            selectedProject={selectedProject}
           />
         </div>
       </div>

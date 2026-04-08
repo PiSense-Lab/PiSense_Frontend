@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import SmallContainer from "../components/dashboard/SmallContainer";
-import { getProjects } from "../api/timeseries.js"; // API call to your backend
+import { getProjects } from "../api/timeseries"; // API call to your backend
 
 const SelectedProject = ({ onProjectChange }) => {
   const [projects, setProjects] = useState([]);
@@ -41,10 +41,10 @@ const SelectedProject = ({ onProjectChange }) => {
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Dropdown for first box */}
-      <div className="flex flex-col gap-1">
-        <label className="font-semibold">{topBarData[0].name}</label>
+      <div className="flex flex-col rounded-md px-8 py-4 bg-white dark:bg-midnight">
+        <label className="text-lg font-semibold">{topBarData[0].name}</label>
         <select
-          className="border p-1 rounded"
+          className="text-s bg-white dark:bg-midnight border-none outline-none cursor-pointer"
           value={selectedProject.project_id}
           onChange={handleChange}
         >

@@ -1,0 +1,67 @@
+import React, { useState, useEffect } from "react";
+import SmallContainer from "../components/dashboard/SmallContainer";
+import { getProjects } from "../api/timeseries"; // API call to your backend
+
+const SelectedProject = ({ onProjectChange }) => {
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
+  // We want to change the datasets associated with the project when the project changes, for now we will just log it
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const allProjects = await getProjects(); // returns list of projects
+        setProjects(allProjects);
+        if (allProjects.length > 0) {
+          setSelectedProject(allProjects[0]);
+          onProjectChange(allProjects[0]);
+        }
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+      }
+    };
+
+    fetchProjects();
+  }, [onProjectChange]);
+
+  const handleChange = (e) => {
+    const project = projects.find((p) => p.project_id === e.target.value);
+    setSelectedProject(project);
+    onProjectChange(project);
+  };
+
+  if (!selectedProject) return <div>Loading projects...</div>;
+
+  const topBarData = [
+    { name: "Active Project:", value: selectedProject.project_name },
+    { name: "Last Update:", value: selectedProject.last_update || "N/A" },
+    { name: "Total Datasets:", value: selectedProject.total_datasets || "0" },
+    { name: "Anomalies:", value: selectedProject.anomalies || "0" },
+  ];
+
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Dropdown for first box */}
+      <div className="flex flex-col rounded-md px-8 py-4 bg-white dark:bg-midnight">
+        <label className="text-lg font-semibold">{topBarData[0].name}</label>
+        <select
+          className="text-s bg-white dark:bg-midnight border-none outline-none cursor-pointer"
+          value={selectedProject.project_id}
+          onChange={handleChange}
+        >
+          {projects.map((project) => (
+            <option key={project.project_id} value={project.project_id}>
+              {project.project_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Other top bar metrics */}
+      {topBarData.slice(1).map((topic, index) => (
+        <SmallContainer key={index} topic={topic} />
+      ))}
+    </div>
+  );
+};
+
+export default SelectedProject;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Label,
   Listbox,
@@ -9,8 +9,13 @@ import {
 import { ChevronUpDownIcon } from "@heroicons/react/16/solid";
 import { CheckIcon } from "@heroicons/react/20/solid";
 
-const SelectedDataset = ({ datasets }) => {
+const SelectedDataset = ({ datasets, onChange }) => {
   const [selected, setSelected] = useState(datasets[0]);
+
+  useEffect(() => {
+    console.log("Updated dataset:", selected);
+    onChange?.(selected.name); // 🔥 send upward
+  }, [onChange, selected]);
 
   return (
     <Listbox value={selected} onChange={setSelected}>

@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import useDarkMode from "../../hooks/useDarkMode";
 
 // ICONS //
-import { LuBell, LuSearch, LuUser } from "react-icons/lu";
+import { LuBell, LuSearch, LuUser, LuLogOut } from "react-icons/lu";
 import { IoSunny } from "react-icons/io5";
 import { HiMiniMoon } from "react-icons/hi2";
 // ICONS //
@@ -18,7 +18,7 @@ const Header = () => {
           <input
             type="text"
             placeholder="Type to search..."
-            className="pl-12 pr-4 py-2 w-full rounded-md outline-none focus:ring-1 placeholder-midnight/80 dark:placeholder-gray-400 dark:ring-sky"
+            className="pl-12 pr-4 py-2 w-full rounded-md outline-none focus:ring-1 placeholder-midnight/80 dark:placeholder-gray-400 ring-sky"
           />
         </div>
         <div className="flex items-center space-x-3">

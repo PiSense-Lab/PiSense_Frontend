@@ -1,21 +1,20 @@
-import { 
-  CartesianGrid, 
-  Line, 
-  LineChart, 
-  XAxis, 
-  YAxis, 
+import {
+  CartesianGrid,
+  Bar,
+  BarChart,
+  XAxis,
+  YAxis,
   ResponsiveContainer,
-  Tooltip
-} from 'recharts';
-import { useState } from 'react';
-import { buildTimeSeries } from '../../api/charting';
+  Tooltip,
+} from "recharts";
+import { useState } from "react";
+import { buildTimeSeries } from "../../../api/charting";
 
-export function GenerateLineChart({ jsonData }) {
+export function GenerateBarChart({ jsonData }) {
   const result = buildTimeSeries(jsonData);
-  // print data to frontend console for debugging
-  console.log('Chart data:', result);
+  console.log("Bar Chart data:", result);
   const [selectedMetric, setSelectedMetric] = useState(
-    result?.metricKeys?.[0] || ""
+    result?.metricKeys?.[0] || "",
   );
   const metricKeys = result?.metricKeys || [];
   const currentMetric = metricKeys.includes(selectedMetric)
@@ -26,15 +25,24 @@ export function GenerateLineChart({ jsonData }) {
     return <div>No valid time-series data found.</div>;
   }
 
-  // fallback label formatter (in case you didn’t add it in backend)
   const formatLabel = (key) =>
-    key
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, c => c.toUpperCase());
+    key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const axisValueFormatter = (value) => {
+    if (typeof value !== "number" || Number.isNaN(value)) return value;
+    return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  };
 
   return (
     <>
-      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
         <label htmlFor="metric-select" style={{ fontWeight: 600 }}>
           Select metric:
         </label>
@@ -42,7 +50,7 @@ export function GenerateLineChart({ jsonData }) {
           id="metric-select"
           value={currentMetric}
           onChange={(e) => setSelectedMetric(e.target.value)}
-          style={{ padding: '6px 10px', minWidth: 180 }}
+          style={{ padding: "6px 10px", minWidth: 180 }}
         >
           {result.metricKeys.map((key) => (
             <option key={key} value={key}>
@@ -53,7 +61,10 @@ export function GenerateLineChart({ jsonData }) {
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={result.data}>
+        <BarChart
+          data={result.data}
+          margin={{ top: 10, right: 12, left: 24, bottom: 0 }}
+        >
           <CartesianGrid strokeDasharray="5 5" />
 
           <XAxis
@@ -62,29 +73,32 @@ export function GenerateLineChart({ jsonData }) {
           />
 
           <YAxis
+            width={78}
+            tickMargin={10}
+            tickFormatter={axisValueFormatter}
             label={{
-              value: formatLabel(currentMetric),
+              value:
+                result.labels?.[currentMetric] || formatLabel(currentMetric),
               angle: -90,
-              position: 'insideLeft',
-              offset: 10,
+              position: "left",
+              dx: -8,
+              style: { textAnchor: "middle", fontSize: 14 },
             }}
           />
 
           <Tooltip
-            labelFormatter={(label) =>
-              new Date(label).toLocaleDateString()
-            }
+            labelFormatter={(label) => new Date(label).toLocaleDateString()}
+            formatter={(value) => axisValueFormatter(value)}
           />
 
-          <Line
+          <Bar
             key={currentMetric}
-            type="monotone"
             dataKey={currentMetric}
             name={result.labels?.[currentMetric] || formatLabel(currentMetric)}
-            stroke="hsl(210, 70%, 50%)"
-            dot={false}
+            fill="hsl(120, 70%, 50%)"
+            radius={[4, 4, 0, 0]}
           />
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
     </>
   );

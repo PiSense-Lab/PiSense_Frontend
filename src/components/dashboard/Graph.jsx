@@ -1,11 +1,15 @@
 import React from "react";
+// import IndexLineChart from "./Charts";
+import ChartPage from "./ChartPage";
 
-const Graph = (data) => {
-  if (!data) return <div>No data yet</div>;
+const Graph = ({ data, projectId, dataset }) => {
+  if (!dataset) return <div>No data yet</div>;
+  console.log("Graph received dataset:", dataset); // 🔥 debug lo
+  console.log("Graph received projectId:", projectId); // 🔥 debug log
+
   return (
     <div className="flex flex-col rounded-md px-8 py-4 h-full bg-white dark:bg-midnight">
-      <h1 className="text-lg font-semibold"> Graph </h1>
-      <div className="text-s"> Text </div>
+      <ChartPage dataset={dataset} />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { useState } from "react";
 import { buildTimeSeries } from "../../../api/charting";
+import { MetricSelectPanel } from "./controls/MetricSelectPanel";
 
 export function GenerateLineChart({ jsonData }) {
   const result = buildTimeSeries(jsonData);
@@ -30,42 +31,41 @@ export function GenerateLineChart({ jsonData }) {
   const formatLabel = (key) =>
     key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const getMetricLabel = (key) => result.labels?.[key] || formatLabel(key);
+
   const axisValueFormatter = (value) => {
     if (typeof value !== "number" || Number.isNaN(value)) return value;
     return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
   };
 
+  const yAxisWidth = (() => {
+    const values = result.data
+      .map((entry) => entry[currentMetric])
+      .filter((value) => typeof value === "number" && Number.isFinite(value));
+
+    if (values.length === 0) return 56;
+
+    const maxChars = values.reduce((max, value) => {
+      const formatted = String(axisValueFormatter(value));
+      return Math.max(max, formatted.length);
+    }, 0);
+
+    return Math.min(92, Math.max(50, maxChars * 8 + 10));
+  })();
+
   return (
     <>
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <label htmlFor="metric-select" style={{ fontWeight: 600 }}>
-          Select metric:
-        </label>
-        <select
-          id="metric-select"
-          value={currentMetric}
-          onChange={(e) => setSelectedMetric(e.target.value)}
-          style={{ padding: "6px 10px", minWidth: 180 }}
-        >
-          {result.metricKeys.map((key) => (
-            <option key={key} value={key}>
-              {result.labels?.[key] || formatLabel(key)}
-            </option>
-          ))}
-        </select>
-      </div>
+      <MetricSelectPanel
+        value={currentMetric}
+        metricKeys={result.metricKeys}
+        onChange={setSelectedMetric}
+        getMetricLabel={getMetricLabel}
+      />
 
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
           data={result.data}
-          margin={{ top: 10, right: 12, left: 24, bottom: 0 }}
+          margin={{ top: 10, right: 12, left: 8, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="5 5" />
 
@@ -75,17 +75,9 @@ export function GenerateLineChart({ jsonData }) {
           />
 
           <YAxis
-            width={78}
+            width={yAxisWidth}
             tickMargin={10}
             tickFormatter={axisValueFormatter}
-            label={{
-              value:
-                result.labels?.[currentMetric] || formatLabel(currentMetric),
-              angle: -90,
-              position: "left",
-              dx: -8,
-              style: { textAnchor: "middle", fontSize: 14 },
-            }}
           />
 
           <Tooltip
@@ -97,7 +89,7 @@ export function GenerateLineChart({ jsonData }) {
             key={currentMetric}
             type="monotone"
             dataKey={currentMetric}
-            name={result.labels?.[currentMetric] || formatLabel(currentMetric)}
+            name={getMetricLabel(currentMetric)}
             stroke="hsl(210, 70%, 50%)"
             dot={false}
           />

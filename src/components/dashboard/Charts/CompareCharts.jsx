@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { useState } from "react";
 import { buildTimeSeries } from "../../../api/charting";
+import { DualMetricSelectPanel } from "./controls/DualMetricSelectPanel";
 
 export function GenerateCompareChart({ jsonData }) {
   const result = buildTimeSeries(jsonData);
@@ -28,6 +29,8 @@ export function GenerateCompareChart({ jsonData }) {
   const formatLabel = (key) =>
     key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const getMetricLabel = (key) => result.labels?.[key] || formatLabel(key);
+
   const axisValueFormatter = (value) => {
     if (typeof value !== "number" || Number.isNaN(value)) return value;
     return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -35,110 +38,14 @@ export function GenerateCompareChart({ jsonData }) {
 
   return (
     <div>
-      {/* Dual Metric Selectors */}
-      <div
-        style={{
-          marginBottom: 16,
-          padding: "12px",
-          backgroundColor: "#f9fafb",
-          borderRadius: "6px",
-          border: "1px solid #e5e7eb",
-          display: "flex",
-          gap: "24px",
-          alignItems: "flex-end",
-          flexWrap: "wrap",
-        }}
-      >
-        {/* Left Metric */}
-        <div>
-          <label
-            htmlFor="left-metric"
-            style={{
-              display: "block",
-              fontWeight: 600,
-              fontSize: "13px",
-              marginBottom: "6px",
-            }}
-          >
-            Left Axis:
-          </label>
-          <select
-            id="left-metric"
-            value={leftMetric}
-            onChange={(e) => setLeftMetric(e.target.value)}
-            style={{
-              padding: "6px 10px",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              fontSize: "13px",
-              minWidth: "160px",
-            }}
-          >
-            {metricKeys.map((key) => (
-              <option key={key} value={key}>
-                {formatLabel(key)}
-              </option>
-            ))}
-          </select>
-          <div
-            style={{
-              marginTop: "4px",
-              width: "16px",
-              height: "16px",
-              backgroundColor: "hsl(210, 70%, 50%)",
-              borderRadius: "2px",
-            }}
-          />
-        </div>
-
-        {/* Right Metric */}
-        <div>
-          <label
-            htmlFor="right-metric"
-            style={{
-              display: "block",
-              fontWeight: 600,
-              fontSize: "13px",
-              marginBottom: "6px",
-            }}
-          >
-            Right Axis:
-          </label>
-          <select
-            id="right-metric"
-            value={rightMetric}
-            onChange={(e) => setRightMetric(e.target.value)}
-            style={{
-              padding: "6px 10px",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              fontSize: "13px",
-              minWidth: "160px",
-            }}
-          >
-            {metricKeys.map((key) => (
-              <option key={key} value={key}>
-                {formatLabel(key)}
-              </option>
-            ))}
-          </select>
-          <div
-            style={{
-              marginTop: "4px",
-              width: "16px",
-              height: "16px",
-              backgroundColor: "hsl(120, 70%, 50%)",
-              borderRadius: "2px",
-            }}
-          />
-        </div>
-
-        {leftMetric === rightMetric && (
-          <p style={{ margin: 0, fontSize: "12px", color: "#f59e0b" }}>
-            ⚠️ Select different metrics for comparison
-          </p>
-        )}
-      </div>
+      <DualMetricSelectPanel
+        metricKeys={metricKeys}
+        leftMetric={leftMetric}
+        rightMetric={rightMetric}
+        onLeftChange={setLeftMetric}
+        onRightChange={setRightMetric}
+        getMetricLabel={getMetricLabel}
+      />
 
       {/* Dual Y-Axis Chart */}
       {leftMetric && rightMetric && leftMetric !== rightMetric && (
@@ -155,10 +62,10 @@ export function GenerateCompareChart({ jsonData }) {
             }}
           >
             <span style={{ color: "hsl(210, 70%, 50%)" }}>
-              Left Axis: {formatLabel(leftMetric)}
+              Left Axis: {getMetricLabel(leftMetric)}
             </span>
             <span style={{ color: "hsl(120, 70%, 50%)" }}>
-              Right Axis: {formatLabel(rightMetric)}
+              Right Axis: {getMetricLabel(rightMetric)}
             </span>
           </div>
 
@@ -200,7 +107,7 @@ export function GenerateCompareChart({ jsonData }) {
                 yAxisId="left"
                 type="monotone"
                 dataKey={leftMetric}
-                name={formatLabel(leftMetric)}
+                name={getMetricLabel(leftMetric)}
                 stroke="hsl(210, 70%, 50%)"
                 dot={false}
                 strokeWidth={2}
@@ -211,7 +118,7 @@ export function GenerateCompareChart({ jsonData }) {
                 yAxisId="right"
                 type="monotone"
                 dataKey={rightMetric}
-                name={formatLabel(rightMetric)}
+                name={getMetricLabel(rightMetric)}
                 stroke="hsl(120, 70%, 50%)"
                 dot={false}
                 strokeWidth={2}

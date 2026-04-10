@@ -35,11 +35,8 @@ export async function getToken(
   }
 }
 
-export async function verifyToken(token, navigate) {
-  if (!token) {
-    navigate("/signin");
-    return;
-  }
+export async function verifyToken(token) {
+  if (!token) return false;
 
   try {
     const response = await fetch(`${BASE_URL}/users/verify-token`, {
@@ -51,12 +48,10 @@ export async function verifyToken(token, navigate) {
       },
     });
 
-    if (!response.ok) {
-      throw new Error("Token verification failed");
-    }
+    return response.ok;
   } catch (error) {
     console.error(error);
     localStorage.removeItem("token");
-    navigate("/signin");
+    return false;
   }
 }

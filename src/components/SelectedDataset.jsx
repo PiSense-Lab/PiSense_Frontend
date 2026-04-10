@@ -14,7 +14,7 @@ const SelectedDataset = ({ datasets, onChange }) => {
 
   useEffect(() => {
     console.log("Updated dataset:", selected);
-    onChange?.(selected.name); // 🔥 send upward
+    onChange?.(selected.name); // send upward
   }, [onChange, selected]);
 
   return (

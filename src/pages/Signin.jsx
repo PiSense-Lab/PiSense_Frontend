@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import RoundButton from "../components/RoundButton";
 import { getToken } from "../api/auth";
 import { useNavigate } from "react-router-dom";
+import { verifyToken } from "../api/auth";
 
 function Signin() {
   const [username, setUsername] = useState("");
@@ -10,6 +11,13 @@ function Signin() {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    verifyToken(token).then((valid) => {
+      if (valid) navigate("/");
+    });
+  }, []);
 
   const validateForm = () => {
     if (!username || !password) {

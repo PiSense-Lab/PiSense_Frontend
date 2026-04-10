@@ -128,7 +128,7 @@ export const getProjects = async (name = null) => {
   // Optional filtering by name
   if (name) {
     return projects.filter((p) =>
-      p.project_name.toLowerCase().includes(name.toLowerCase())
+      p.project_name.toLowerCase().includes(name.toLowerCase()),
     );
   }
 
@@ -138,15 +138,15 @@ export const getProjects = async (name = null) => {
 export const getDatasetsForProject = async (projectId) => {
   // Mock dataset list based on projectId
   const datasets = {
-    "1": [
+    1: [
       { id: "1", name: "timeseries_data" },
       { id: "2", name: "timeseriesdata" },
     ],
-    "2": [
+    2: [
       { id: "3", name: "energy_jan_2026" },
       { id: "4", name: "energy_feb_2026" },
     ],
-    "3": [
+    3: [
       { id: "5", name: "traffic_jan_2026" },
       { id: "6", name: "traffic_feb_2026" },
     ],

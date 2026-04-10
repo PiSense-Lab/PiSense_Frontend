@@ -10,8 +10,14 @@ const Layout = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    verifyToken(token, navigate).finally(() => setChecking(false));
-  });
+    verifyToken(token).then((valid) => {
+      if (!valid) {
+        navigate("/signin");
+      } else {
+        setChecking(false); // ← only stop checking if valid
+      }
+    });
+  }, []);
 
   if (checking)
     return (

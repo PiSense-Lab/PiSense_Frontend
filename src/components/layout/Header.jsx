@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import useDarkMode from "../../hooks/useDarkMode";
+import { useNavigate } from "react-router-dom";
 
 // ICONS //
 import { LuBell, LuSearch, LuUser, LuLogOut } from "react-icons/lu";
@@ -7,14 +8,16 @@ import { IoSunny } from "react-icons/io5";
 import { HiMiniMoon } from "react-icons/hi2";
 // ICONS //
 
-const Header = ({ setToken }) => {
+const Header = () => {
   const { toggleDarkMode, isDarkMode } = useDarkMode();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
+  const navigate = useNavigate();
+
   const handleLogout = () => {
     localStorage.removeItem("token");
-    setToken(null);
+    navigate("/signin", { replace: true });
   };
 
   // Close menu when clicking outside

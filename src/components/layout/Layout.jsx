@@ -11,9 +11,14 @@ const Layout = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     verifyToken(token, navigate).finally(() => setChecking(false));
-  }, [navigate]);
+  });
 
-  if (checking) return null;
+  if (checking)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <span className="text-gray-400">Loading...</span>
+      </div>
+    );
 
   return (
     <div className="flex">

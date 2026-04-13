@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import BASE_URL from "../../api/base_url";
-import { GenerateLineChart } from './Charts';
 import { getTable } from "../../api/timeseries";
+import { GenerateLineChart } from "../dashboard/Charts/LineCharts";
+import { GenerateBarChart } from "../dashboard/Charts/BarCharts";
+import { GenerateCompareChart } from "../dashboard/Charts/CompareCharts";
 
-export default function ChartPage({ dataset, projectId }) {
+export default function ChartPage({ dataset, projectId, chartType = "line" }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +29,17 @@ export default function ChartPage({ dataset, projectId }) {
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>No data</div>;
 
-  // based on usr selection, pass the json data to bar chart or line or whatever chart
+  const renderChart = () => {
+    switch (chartType) {
+      case "bar":
+        return <GenerateBarChart jsonData={data} />;
+      case "dualAxis":
+        return <GenerateCompareChart jsonData={data} />;
+      case "line":
+      default:
+        return <GenerateLineChart jsonData={data} />;
+    }
+  };
 
-  return <GenerateLineChart jsonData={data} />;
+  return renderChart();
 }

@@ -1,10 +1,11 @@
 import React from "react";
-import ChartPage from "../../api/weather";
+// import ChartPage from "../../api/weather";
+import ChartPage from "./ChartPage";
 import { useState } from "react";
 import { ChartTitleEditor } from "./Charts/ChartTitleEditor";
 import { GraphTypeSwitcher } from "./Charts/controls/GraphTypeSwitcher";
 
-const Graph = (data) => {
+const Graph = ( data, projectId, dataset ) => {
   const [chartType, setChartType] = useState("line");
   const [chartTitle, setChartTitle] = useState("");
 
@@ -21,7 +22,7 @@ const Graph = (data) => {
         <GraphTypeSwitcher chartType={chartType} onChange={setChartType} />
       </div>
 
-      <ChartPage chartType={chartType} />
+      <ChartPage dataset={dataset} projectId={projectId} chartType={chartType} />
     </div>
   );
 };

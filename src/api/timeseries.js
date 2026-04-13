@@ -87,6 +87,7 @@ export const submitManualData = async ({ datasetName, rows }) => {
 
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
+  
   if (projectId == "1"){
      // Get user location
     const { latitude, longitude } = await getUserLocation();

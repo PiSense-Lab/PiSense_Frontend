@@ -36,7 +36,7 @@ const Sidebar = () => {
               to={link.path}
               end={link.path === "/"}
               className={({ isActive }) =>
-                `flex w-full justify-center md:justify-start items-center md:space-x-5 py-2 md:px-5 rounded-md font-medium ${isActive ? "bg-gray-200 dark:bg-pitch dark:text-sky" : "hover:bg-gray-200 dark:text-gray-300 dark:hover:text-sky dark:hover:bg-pitch"}`
+                `flex w-full justify-center md:justify-start items-center md:space-x-5 py-2 md:px-5 rounded-md font-medium ${isActive ? "bg-slate-200 dark:bg-pitch dark:text-sky" : "hover:bg-slate-200 dark:text-gray-300 dark:hover:text-sky dark:hover:bg-pitch"}`
               }
             >
               <span className=""> {link.icon()} </span>
@@ -51,7 +51,7 @@ const Sidebar = () => {
       <NavLink
         to="/settings"
         className={({ isActive }) =>
-          `mt-auto mb-4 flex w-full justify-center md:justify-start items-center md:space-x-5 py-2 md:px-5 rounded-md font-medium ${isActive ? "bg-gray-200 dark:bg-pitch dark:text-sky" : "hover:bg-gray-200 dark:text-gray-300 dark:hover:text-sky dark:hover:bg-pitch"}`
+          `mt-auto mb-4 flex w-full justify-center md:justify-start items-center md:space-x-5 py-2 md:px-5 rounded-md font-medium ${isActive ? "bg-slate-200 dark:bg-pitch dark:text-sky" : "hover:bg-slate-200 dark:text-gray-300 dark:hover:text-sky dark:hover:bg-pitch"}`
         }
       >
         <span className=""> {LuSettings()} </span>

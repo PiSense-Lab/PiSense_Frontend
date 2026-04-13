@@ -3,7 +3,7 @@ import BASE_URL from "../../api/base_url";
 import { GenerateLineChart } from './Charts';
 import { getTable } from "../../api/timeseries";
 
-export default function ChartPage({ dataset }) {
+export default function ChartPage({ dataset, projectId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -12,7 +12,7 @@ export default function ChartPage({ dataset }) {
       try {
         if (!dataset) return;
 
-        const res = await getTable(dataset); // 🔥 dynamic now
+        const res = await getTable(dataset, projectId); // 🔥 dynamic now
         setData(res);
       } catch (err) {
         console.error('API error:', err);
@@ -22,7 +22,7 @@ export default function ChartPage({ dataset }) {
     }
 
     fetchData();
-  }, [dataset]); // 🔥 re-fetch when dataset changes
+  }, [dataset, projectId]); // 🔥 re-fetch when dataset changes
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>No data</div>;

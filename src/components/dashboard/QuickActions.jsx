@@ -14,6 +14,7 @@ const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles, onDatasetChang
           const ds = await getDatasetsForProject(selectedProject.project_id);
           setDatasets(ds);
           if (ds.length > 0) {
+            console.log("Datasets fetched for project:", ds); // debug log
             onDatasetChange(ds[0].name); // send first dataset upward by default
           }
         } catch (err) {

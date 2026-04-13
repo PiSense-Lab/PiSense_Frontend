@@ -14,6 +14,7 @@ import { buildTimeSeries } from '../../api/charting';
 
 
 export function GenerateLineChart({ jsonData }) {
+  
   const result = buildTimeSeries(jsonData);
   // print data to frontend console for debugging
   console.log('Chart data:', result);

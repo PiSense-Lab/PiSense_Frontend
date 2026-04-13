@@ -2,6 +2,100 @@
 import BASE_URL from "./base_url";
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const normalize = (n) => Math.round(n * 100) / 100; // ~1km precision
+
+const WEATHER_CACHE_KEY = "weatherDailyCache";
+
+const decodeJwtPayload = (token) => {
+  if (!token) return null;
+  try {
+    const [, payloadBase64] = token.split(".");
+    if (!payloadBase64) return null;
+
+    const payload = atob(
+      payloadBase64.replace(/-/g, "+").replace(/_/g, "/"),
+    );
+
+    return JSON.parse(decodeURIComponent(escape(payload)));
+  } catch {
+    return null;
+  }
+};
+
+const getStoredUserIdentity = () => {
+  const username = localStorage.getItem("username");
+  const userId = localStorage.getItem("userId");
+
+  if (username || userId) {
+    return { username, userId };
+  }
+
+  const token = localStorage.getItem("token");
+  const payload = decodeJwtPayload(token);
+  return {
+    username: payload?.username ?? null,
+    userId: payload?.user_id ?? payload?.sub ?? null,
+  };
+};
+
+const getWeatherCache = () => {
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const saveWeatherCache = (cache) => {
+  localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(cache));
+};
+
+const isSameCacheDay = (cacheDate) => {
+  if (!cacheDate) return false;
+  return cacheDate === new Date().toISOString().split("T")[0];
+};
+
+const buildWeatherDatasets = (
+  forecastHourly,
+  forecastDaily,
+  historicalHourly,
+  historicalDaily,
+) => [
+  {
+    id: "weather_forecast_hourly",
+    name: "Hourly Weather Forecast",
+    description: "7-day hourly weather forecast based on your location.",
+    type: "forecast",
+    frequency: "hourly",
+    data: forecastHourly,
+  },
+  {
+    id: "weather_forecast_daily",
+    name: "Daily Weather Forecast",
+    description: "7-day daily weather forecast based on your location.",
+    type: "forecast",
+    frequency: "daily",
+    data: forecastDaily,
+  },
+  {
+    id: "weather_historical_hourly",
+    name: "Hourly Historical Weather",
+    description: "Hourly historical weather data for the past year.",
+    type: "historical",
+    frequency: "hourly",
+    data: historicalHourly,
+  },
+  {
+    id: "weather_historical_daily",
+    name: "Daily Historical Weather",
+    description: "Daily historical weather data for the past year.",
+    type: "historical",
+    frequency: "daily",
+    data: historicalDaily,
+  },
+];
+
 // import { fetchWeatherData } from "./indexedbdhelper";
 
 // UPLOAD DATA
@@ -87,87 +181,18 @@ export const submitManualData = async ({ datasetName, rows }) => {
 
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
-  
-  if (projectId == "1"){
-     // Get user location
-    const { latitude, longitude } = await getUserLocation();
+  const isWeatherProject =
+    String(projectId) === "weather-1" || String(projectId) === "1";
 
-    // Generate date values
-    const today = new Date();
-    const endDate = today.toISOString().split("T")[0];
-
-    const startDateObj = new Date();
-    startDateObj.setFullYear(today.getFullYear() - 1);
-    const startDate = startDateObj.toISOString().split("T")[0];
-
-    const forecastDays = 7;
-
-    // Fetch all weather datasets concurrently
-    const [
-      forecastHourly,
-      forecastDaily,
-      historicalHourly,
-      historicalDaily,
-    ] = await Promise.all([
-        fetchWeatherData("/weather/forecast-weather/hourly", {
-          latitude,
-          longitude,
-          forecast_days: forecastDays,
-        }),
-        fetchWeatherData("/weather/forecast-weather/daily", {
-          latitude,
-          longitude,
-          forecast_days: forecastDays,
-        }),
-        fetchWeatherData("/weather/historical-weather/hourly", {
-          latitude,
-          longitude,
-          start_date: startDate,
-          end_date: endDate,
-        }),
-        fetchWeatherData("/weather/historical-weather/daily", {
-          latitude,
-          longitude,
-          start_date: startDate,
-          end_date: endDate,
-        }),
-      ]);
-      const data = [
-      {
-        id: "weather_forecast_hourly",
-        name: "Hourly Weather Forecast",
-        description: "7-day hourly weather forecast based on your location.",
-        type: "forecast",
-        frequency: "hourly",
-        data: forecastHourly,
-      },
-      {
-        id: "weather_forecast_daily",
-        name: "Daily Weather Forecast",
-        description: "7-day daily weather forecast based on your location.",
-        type: "forecast",
-        frequency: "daily",
-        data: forecastDaily,
-      },
-      {
-        id: "weather_historical_hourly",
-        name: "Hourly Historical Weather",
-        description: "Hourly historical weather data for the past year.",
-        type: "historical",
-        frequency: "hourly",
-        data: historicalHourly,
-      },
-      {
-        id: "weather_historical_daily",
-        name: "Daily Historical Weather",
-        description: "Daily historical weather data for the past year.",
-        type: "historical",
-        frequency: "daily",
-        data: historicalDaily,
-      },
-    ];
-    return data.find(d => d.name === tableName)?.data || null;
+  if (isWeatherProject) {
+    const cache = getWeatherCache();
+    if (cache && isSameCacheDay(cache.date) && Array.isArray(cache.data)) {
+      return cache.data.find((d) => d.name === tableName)?.data || null;
     }
+
+    const weatherData = await ensureDailyWeatherCache();
+    return weatherData.find((d) => d.name === tableName)?.data || null;
+  }
 
   try {
     const response = await fetch(`${BASE_URL}/datatables/${tableName}`);
@@ -184,34 +209,54 @@ export const getTable = async (tableName, projectId) => {
 
 // src/api/projects.js
 
-// Hardcoded project data for now
-export const getProjects = async (name = null) => {
-  // for the weather project get user time and date that way we can show the most latest data
-  const projects = [
-    {
-      project_id: "1",
-      project_name: "Weather",
-      last_update: "2026-02-13 14:30",
-      total_datasets: 1200,
-      anomalies: 4,
-    },
-    {
-      project_id: "2",
-      project_name: "Energy",
-      last_update: "2026-03-01 09:15",
-      total_datasets: 950,
-      anomalies: 2,
-    },
-    {
-      project_id: "3",
-      project_name: "Traffic",
-      last_update: "2026-04-05 18:00",
-      total_datasets: 720,
-      anomalies: 1,
-    },
-  ];
+export const getProjects = async ({ userId = null, username = null, name = null } = {}) => {
+  const weatherProject = {
+    project_id: "weather-1",
+    project_name: "Weather",
+    last_update: new Date().toISOString().split("T")[0],
+    total_datasets: 4,
+    anomalies: 0,
+  };
 
-  // Optional filtering by name
+  const { userId: storedUserId, username: storedUsername } = getStoredUserIdentity();
+  userId = userId ?? storedUserId;
+  username = username ?? storedUsername;
+
+  const projects = [weatherProject];
+
+  if (userId || username) {
+    try {
+      const params = new URLSearchParams();
+      if (userId) params.append("user_id", userId);
+      if (username) params.append("username", username);
+
+      const response = await fetch(`${BASE_URL}/projects?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        const userProjects = Array.isArray(data)
+          ? data
+          : Array.isArray(data.projects)
+          ? data.projects
+          : [];
+
+        const filteredUserProjects = userProjects.filter(
+          (project) =>
+            project.project_name !== weatherProject.project_name &&
+            String(project.project_id) !== String(weatherProject.project_id),
+        );
+
+        projects.push(...filteredUserProjects);
+      } else {
+        console.warn(
+          "getProjects: failed to fetch user projects",
+          response.status,
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching user-specific projects:", error);
+    }
+  }
+
   if (name) {
     return projects.filter((p) =>
       p.project_name.toLowerCase().includes(name.toLowerCase()),
@@ -255,12 +300,79 @@ const fetchWeatherData = async (endpoint, params) => {
   return response.json();
 };
 
+const fetchWeatherDatasetBundle = async () => {
+  const { latitude, longitude } = await getUserLocation();
+
+  const today = new Date();
+  const endDate = today.toISOString().split("T")[0];
+
+  const startDateObj = new Date();
+  startDateObj.setFullYear(today.getFullYear() - 1);
+  const startDate = startDateObj.toISOString().split("T")[0];
+
+  const forecastDays = 7;
+
+  const [
+    forecastHourly,
+    forecastDaily,
+    historicalHourly,
+    historicalDaily,
+  ] = await Promise.all([
+    fetchWeatherData("/weather/forecast-weather/hourly", {
+      latitude,
+      longitude,
+      forecast_days: forecastDays,
+    }),
+    fetchWeatherData("/weather/forecast-weather/daily", {
+      latitude,
+      longitude,
+      forecast_days: forecastDays,
+    }),
+    fetchWeatherData("/weather/historical-weather/hourly", {
+      latitude,
+      longitude,
+      start_date: startDate,
+      end_date: endDate,
+    }),
+    fetchWeatherData("/weather/historical-weather/daily", {
+      latitude,
+      longitude,
+      start_date: startDate,
+      end_date: endDate,
+    }),
+  ]);
+
+  return buildWeatherDatasets(
+    forecastHourly,
+    forecastDaily,
+    historicalHourly,
+    historicalDaily,
+  );
+};
+
+export const ensureDailyWeatherCache = async () => {
+  const cache = getWeatherCache();
+  if (cache && isSameCacheDay(cache.date) && Array.isArray(cache.data)) {
+    return cache.data;
+  }
+
+  const data = await fetchWeatherDatasetBundle();
+  saveWeatherCache({
+    date: new Date().toISOString().split("T")[0],
+    data,
+  });
+  return data;
+};
+
 /**
  * Fetch datasets associated with a project.
  */
 export const getDatasetsForProject = async (projectId) => {
-  // Only handle the Weather project (ID: "1")
-  if (String(projectId) !== "1") {
+  // Only handle the Weather project (ID: "weather-1" or "1")
+  const isWeatherProject =
+    String(projectId) === "weather-1" || String(projectId) === "1";
+
+  if (!isWeatherProject) {
     const datasets = {
       "1": [
         { id: "1", name: "timeseries_data" },
@@ -279,9 +391,8 @@ export const getDatasetsForProject = async (projectId) => {
     return datasets[projectId] || [];
   }
 
-
-    // Return datasets formatted for UI consumption
-    return [
+  // Return datasets formatted for UI consumption
+  return [
       {
         id: "weather_forecast_hourly",
         name: "Hourly Weather Forecast",

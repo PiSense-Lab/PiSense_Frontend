@@ -7,19 +7,24 @@ import { verifyToken } from "../../api/auth";
 const Layout = () => {
   const [checking, setChecking] = useState(true);
   const navigate = useNavigate();
-  const shouldBypassAuth = import.meta.env.DEV;
 
   useEffect(() => {
-    if (shouldBypassAuth) {
-      setChecking(false);
-      return;
-    }
-
     const token = localStorage.getItem("token");
-    verifyToken(token, navigate).finally(() => setChecking(false));
-  }, [navigate, shouldBypassAuth]);
+    verifyToken(token).then((valid) => {
+      if (!valid) {
+        navigate("/signin");
+      } else {
+        setChecking(false); // ← only stop checking if valid
+      }
+    });
+  }, []);
 
-  if (checking) return null;
+  if (checking)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <span className="text-gray-400">Loading...</span>
+      </div>
+    );
 
   return (
     <div className="flex">

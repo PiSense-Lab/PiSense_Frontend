@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import { useState } from "react";
 import { buildTimeSeries } from "../../../api/charting";
-import { MetricSelectPanel } from "./controls/MetricSelectPanel";
+import { MetricSelectPanel } from "./chart-support/MetricSelectPanel";
 
 const CHART_HEIGHT = 400;
 const POINT_WIDTH = 12;

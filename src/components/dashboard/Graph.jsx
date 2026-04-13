@@ -1,8 +1,9 @@
 import React from "react";
 import { useState } from "react";
 import ChartPage from "./ChartPage";
-import { ChartTitleEditor } from "./Charts/ChartTitleEditor";
-import { GraphTypeSwitcher } from "./Charts/controls/GraphTypeSwitcher";
+import { ChartTitleEditor } from "./Charts/chart-support/ChartTitleEditor";
+import { ExportGraphButton } from "./Charts/chart-support/ExportGraphButton";
+import { GraphTypeSwitcher } from "./Charts/chart-support/GraphTypeSwitcher";
 
 const Graph = ({ projectId, dataset }) => {
   const [chartType, setChartType] = useState("line");
@@ -17,7 +18,9 @@ const Graph = ({ projectId, dataset }) => {
           <ChartTitleEditor title={chartTitle} onTitleChange={setChartTitle} />
         </div>
 
-        <GraphTypeSwitcher chartType={chartType} onChange={setChartType} />
+        <div className="flex items-center gap-3">
+          <GraphTypeSwitcher chartType={chartType} onChange={setChartType} />
+        </div>
       </div>
 
       <div className="min-w-0">
@@ -26,6 +29,10 @@ const Graph = ({ projectId, dataset }) => {
           projectId={projectId}
           chartType={chartType}
         />
+      </div>
+
+      <div className="mt-3 flex justify-end">
+        <ExportGraphButton />
       </div>
     </div>
   );

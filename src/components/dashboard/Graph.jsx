@@ -11,7 +11,7 @@ const Graph = ({ projectId, dataset }) => {
   if (!dataset) return <div>No data yet</div>;
 
   return (
-    <div className="flex flex-col rounded-md px-5 py-5 h-full bg-white dark:bg-midnight border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div className="flex min-w-0 flex-col rounded-md px-5 py-5 h-full bg-white dark:bg-midnight border border-slate-200 dark:border-slate-800 shadow-sm">
       <div className="mb-1 flex items-center justify-between gap-4">
         <div className="flex items-center">
           <ChartTitleEditor title={chartTitle} onTitleChange={setChartTitle} />
@@ -20,11 +20,13 @@ const Graph = ({ projectId, dataset }) => {
         <GraphTypeSwitcher chartType={chartType} onChange={setChartType} />
       </div>
 
-      <ChartPage
-        dataset={dataset}
-        projectId={projectId}
-        chartType={chartType}
-      />
+      <div className="min-w-0">
+        <ChartPage
+          dataset={dataset}
+          projectId={projectId}
+          chartType={chartType}
+        />
+      </div>
     </div>
   );
 };

@@ -36,14 +36,14 @@ const Home = () => {
 
       {/* Graph + QuickActions */}
       <div className="grid md:flex gap-4">
-        <div className="flex-2">
+        <div className="flex-2 min-w-0">
           <Graph
             data={processedData}
             projectId={selectedProject?.project_id}
             dataset={selectedDataset}
           />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <QuickActions
             onUpload={handleFileUpload}
             onManualSubmit={handleManualSubmit}

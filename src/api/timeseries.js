@@ -370,7 +370,7 @@ export const ensureDailyWeatherCache = async () => {
 export const getDatasetsForProject = async (projectId) => {
   // Only handle the Weather project (ID: "weather-1" or "1")
   const isWeatherProject =
-    String(projectId) === "weather-1" || String(projectId) === "1";
+    String(projectId) === "weather-1";
 
   if (!isWeatherProject) {
     const datasets = {

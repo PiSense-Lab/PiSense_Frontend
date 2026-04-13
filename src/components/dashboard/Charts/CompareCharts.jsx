@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { useState } from "react";
 import { buildTimeSeries } from "../../../api/charting";
-import { DualMetricSelectPanel } from "./controls/DualMetricSelectPanel";
+import { DualMetricSelectPanel } from "./chart-support/DualMetricSelectPanel";
 
 export function GenerateCompareChart({ jsonData }) {
   const result = buildTimeSeries(jsonData);

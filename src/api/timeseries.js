@@ -213,7 +213,7 @@ export const getProjects = async (name = null) => {
   // Optional filtering by name
   if (name) {
     return projects.filter((p) =>
-      p.project_name.toLowerCase().includes(name.toLowerCase())
+      p.project_name.toLowerCase().includes(name.toLowerCase()),
     );
   }
 

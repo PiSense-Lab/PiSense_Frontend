@@ -16,8 +16,6 @@ const FileImport = ({ open, onClose, onUpload, setUploadFiles }) => {
 
   if (!open) return null;
 
-  if (!open) return null;
-
   // Called when files are dragged into the drop zone
   const handleDragEnter = (e) => {
     e.preventDefault(); // Prevent default browser behavior

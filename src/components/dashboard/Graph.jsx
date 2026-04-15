@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useState } from "react";
+import domtoimage from "dom-to-image-more";
 import ChartPage from "./ChartPage";
 import { ChartTitleEditor } from "./Charts/chart-support/ChartTitleEditor";
 import { ExportGraphButton } from "./Charts/chart-support/ExportGraphButton";
@@ -8,6 +9,52 @@ import { GraphTypeSwitcher } from "./Charts/chart-support/GraphTypeSwitcher";
 const Graph = ({ projectId, dataset }) => {
   const [chartType, setChartType] = useState("line");
   const [chartTitle, setChartTitle] = useState("");
+  const chartRef = useRef(null);
+
+  const handleExportChart = async () => {
+    if (!chartRef.current) return;
+
+    try {
+      const blob = await domtoimage.toBlob(chartRef.current, {
+        bgcolor: "#ffffff",
+        scale: 2,
+        quality: 1.0,
+        width: chartRef.current.offsetWidth * 2,
+        height: chartRef.current.offsetHeight * 2,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `chart-${chartTitle || "export"}-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting chart:", error);
+      // Fallback: try with minimal options
+      try {
+        const blob = await domtoimage.toBlob(chartRef.current, {
+          bgcolor: "#ffffff",
+          scale: 1,
+          quality: 0.95,
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `chart-${chartTitle || "export"}-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (fallbackError) {
+        console.error("Fallback export also failed:", fallbackError);
+        alert("Chart export failed. Please try again or contact support.");
+      }
+    }
+  };
 
   if (!dataset) return <div>No data yet</div>;
 
@@ -25,6 +72,7 @@ const Graph = ({ projectId, dataset }) => {
 
       <div className="min-w-0">
         <ChartPage
+          ref={chartRef}
           dataset={dataset}
           projectId={projectId}
           chartType={chartType}
@@ -32,7 +80,7 @@ const Graph = ({ projectId, dataset }) => {
       </div>
 
       <div className="mt-3 flex justify-end">
-        <ExportGraphButton />
+        <ExportGraphButton onClick={handleExportChart} />
       </div>
     </div>
   );

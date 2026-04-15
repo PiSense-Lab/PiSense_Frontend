@@ -19,7 +19,7 @@ const decodeJwtPayload = (token) => {
 
 const getUserIdFromToken = (token) => {
   const payload = decodeJwtPayload(token);
-  return payload?.user_id ?? payload?.sub ?? null;
+  return payload?.id ?? payload?.id ?? payload?.sub ?? null;
 };
 
 export async function getToken(
@@ -47,7 +47,7 @@ export async function getToken(
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("username", username);
 
-      const userId = data.user_id ?? getUserIdFromToken(data.access_token);
+      const userId = data.id ?? getUserIdFromToken(data.access_token);
       if (userId) {
         localStorage.setItem("userId", String(userId));
       }

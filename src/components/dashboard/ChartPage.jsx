@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import { getTable } from "../../api/timeseries";
 import { GenerateLineChart } from "./Charts/LineCharts";
 import { GenerateBarChart } from "./Charts/BarCharts";
 import { GenerateCompareChart } from "./Charts/CompareCharts";
 
-export default function ChartPage({ dataset, projectId, chartType = "line" }) {
+const ChartPage = forwardRef(function ChartPage(
+  { dataset, projectId, chartType = "line" },
+  ref,
+) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,13 +31,19 @@ export default function ChartPage({ dataset, projectId, chartType = "line" }) {
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>No data</div>;
 
-  switch (chartType) {
-    case "bar":
-      return <GenerateBarChart jsonData={data} />;
-    case "dualAxis":
-      return <GenerateCompareChart jsonData={data} />;
-    case "line":
-    default:
-      return <GenerateLineChart jsonData={data} />;
-  }
-}
+  const chartComponent = (() => {
+    switch (chartType) {
+      case "bar":
+        return <GenerateBarChart jsonData={data} />;
+      case "dualAxis":
+        return <GenerateCompareChart jsonData={data} />;
+      case "line":
+      default:
+        return <GenerateLineChart jsonData={data} />;
+    }
+  })();
+
+  return <div ref={ref}>{chartComponent}</div>;
+});
+
+export default ChartPage;

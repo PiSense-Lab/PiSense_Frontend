@@ -207,6 +207,21 @@ export const getTable = async (tableName, projectId) => {
   }
 };
 
+export const getTables = async (projectId = 1) => {
+  try {
+    const response = await fetch(`${BASE_URL}/datatables/?project_id=${projectId}`);
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+    const json = await response.json();
+    return json.data;
+  } catch (error) {
+    console.error("Error fetching table:", error);
+    return null;
+  }
+};
+
+
 // src/api/projects.js
 
 export const getProjects = async ({ userId = null, username = null, name = null } = {}) => {
@@ -218,19 +233,18 @@ export const getProjects = async ({ userId = null, username = null, name = null 
     anomalies: 0,
   };
 
-  const { userId: storedUserId, username: storedUsername } = getStoredUserIdentity();
+  const { userId: storedUserId } = getStoredUserIdentity();
   userId = userId ?? storedUserId;
-  username = username ?? storedUsername;
 
   const projects = [weatherProject];
 
-  if (userId || username) {
+  if (userId) {
     try {
       const params = new URLSearchParams();
       if (userId) params.append("user_id", userId);
-      if (username) params.append("username", username);
+      
 
-      const response = await fetch(`${BASE_URL}/projects?${params}`);
+      const response = await fetch(`${BASE_URL}/users/get_user_projects?user_id=${userId}`);
       if (response.ok) {
         const data = await response.json();
         const userProjects = Array.isArray(data)
@@ -373,22 +387,20 @@ export const getDatasetsForProject = async (projectId) => {
     String(projectId) === "weather-1";
 
   if (!isWeatherProject) {
-    const datasets = {
-      "1": [
-        { id: "1", name: "timeseries_data" },
-        { id: "2", name: "timeseriesdata" },
-      ],
-      "2": [
-        { id: "3", name: "timeseries_data" },
-        { id: "4", name: "timeseriesdata" },
-      ],
-      "3": [
-        { id: "5", name: "traffic_jan_2026" },
-        { id: "6", name: "traffic_feb_2026" },
-      ],
-    };
+    // For non-weather projects, fetch datasets from backend = http://192.168.1.90:8000/datatables/?project_id=3
+    try {
+      const params = new URLSearchParams({ project_id: projectId });
+      const response = await fetch(`${BASE_URL}/datatables?${params}`);
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+      const json = await response.json();
+      return Array.isArray(json.data) ? json.data : [];
+    } catch (error) {
+      console.error("Error fetching datasets for project:", error);
+      return [];
+    }
 
-    return datasets[projectId] || [];
   }
 
   // Return datasets formatted for UI consumption

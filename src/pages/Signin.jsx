@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import RoundButton from "../components/RoundButton";
-import { getToken } from "../api/auth";
+import { getToken, verifyToken } from "../api/auth";
 import { useNavigate } from "react-router-dom";
-import { verifyToken } from "../api/auth";
+import { RxCheck } from "react-icons/rx";
 
 function Signin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,12 +34,24 @@ function Signin() {
     if (!validateForm()) return;
     setLoading(true);
 
-    getToken(username, password, setLoading, setError, navigate);
+    const { success, error, token } = await getToken(
+      username,
+      password,
+      rememberMe,
+    );
+    setLoading(false);
+
+    if (success) {
+      localStorage.setItem("token", token);
+      navigate("/");
+    } else {
+      setError(error);
+    }
   };
 
   return (
     <>
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center ">
         <div className="bg-white dark:bg-midnight py-8 px-16 rounded-md">
           <div className="flex flex-col justify-center items-center">
             <div className="w-40">
@@ -96,6 +109,29 @@ function Signin() {
                 </div>
               </div>
 
+              {/* Remember Me */}
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="peer hidden"
+                  />
+
+                  <div
+                    className="w-4 h-4 rounded border border-gray-400 flex items-center justify-center 
+      peer-checked:bg-sky-500 peer-checked:border-sky-500"
+                  >
+                    <RxCheck className="text-white text-sm dark:text-midnight" />
+                  </div>
+
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    Remember me for 30 days
+                  </span>
+                </label>
+              </div>
+
               <div>
                 <RoundButton
                   type="submit"
@@ -112,7 +148,7 @@ function Signin() {
             </form>
 
             <p className="mt-6 text-center text-sm/6 text-gray-400">
-              Not a member?{" "}
+              New to PiSense?{" "}
               <a
                 href="/signup"
                 className="font-semibold text-sky hover:text-sky/80"

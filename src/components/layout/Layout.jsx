@@ -1,25 +1,52 @@
 import { React, useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { verifyToken } from "../../api/auth";
 
 const Layout = () => {
   const [checking, setChecking] = useState(true);
   const navigate = useNavigate();
-  const shouldBypassAuth = import.meta.env.DEV;
+  const location = useLocation();
 
   useEffect(() => {
-    if (shouldBypassAuth) {
-      setChecking(false);
-      return;
-    }
-
     const token = localStorage.getItem("token");
-    verifyToken(token, navigate).finally(() => setChecking(false));
-  }, [navigate, shouldBypassAuth]);
+    verifyToken(token).then((valid) => {
+      if (!valid) {
+        localStorage.removeItem("token");
+        navigate("/signin", { replace: true });
+      } else {
+        setChecking(false); // ← only stop checking if valid
+      }
+    });
+  }, [navigate]);
 
-  if (checking) return null;
+  function isTokenValid() {
+    const token = localStorage.getItem("token");
+    if (!token) return false;
+    try {
+      const payloadBase64 = token.split(".")[1];
+      if (!payloadBase64) return false;
+      const { exp } = JSON.parse(atob(payloadBase64));
+      return typeof exp === "number" && Date.now() / 1000 < exp;
+    } catch {
+      return false;
+    }
+  }
+
+  useEffect(() => {
+    if (!checking && !isTokenValid()) {
+      localStorage.removeItem("token");
+      navigate("/signin", { replace: true });
+    }
+  }, [checking, location, navigate]);
+
+  if (checking)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <span className="text-gray-400">Loading...</span>
+      </div>
+    );
 
   return (
     <div className="flex">

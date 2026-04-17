@@ -34,10 +34,15 @@ function Signin() {
     if (!validateForm()) return;
     setLoading(true);
 
-    const { success, error } = await getToken(username, password, rememberMe);
+    const { success, error, token } = await getToken(
+      username,
+      password,
+      rememberMe,
+    );
     setLoading(false);
 
     if (success) {
+      localStorage.setItem("token", token);
       navigate("/");
     } else {
       setError(error);

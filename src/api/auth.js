@@ -18,8 +18,7 @@ export async function getToken(username, password, rememberMe) {
 
     if (response.ok) {
       const data = await response.json();
-      localStorage.setItem("token", data.access_token);
-      return { success: true };
+      return { success: true, token: data.access_token };
     } else {
       const errorData = await response.json();
       return {
@@ -52,7 +51,6 @@ export async function verifyToken(token) {
     return response.ok;
   } catch (error) {
     console.error(error);
-    localStorage.removeItem("token");
     return false;
   }
 }

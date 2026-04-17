@@ -62,18 +62,11 @@ export async function createUser(
   username,
   password,
 ) {
-  const formDetails = new URLSearchParams();
-  formDetails.append("firstname", firstname);
-  formDetails.append("lastname", lastname);
-  formDetails.append("email", email);
-  formDetails.append("username", username);
-  formDetails.append("password", password);
-
   try {
     const response = await fetch(`${BASE_URL}/users/create_user`, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formDetails,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ firstname, lastname, email, username, password }),
     });
 
     const data = await response.json();
@@ -82,7 +75,9 @@ export async function createUser(
     if (!response.ok) {
       return {
         success: false,
-        error: data.detail || "Failed to create account",
+        error: Array.isArray(data.detail)
+          ? data.detail[0].msg
+          : data.detail || "Failed to create account",
       };
     }
 
@@ -94,7 +89,7 @@ export async function createUser(
     console.error(error);
     return {
       success: false,
-      error: "Network error",
+      error: "Something went wrong, please try again later.",
     };
   }
 }

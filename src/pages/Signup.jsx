@@ -48,7 +48,6 @@ function Signup() {
     e.preventDefault();
     if (!validateForm()) return;
     setLoading(true);
-    setError("Submitted");
 
     const { success, error } = await createUser(
       firstName,
@@ -57,12 +56,10 @@ function Signup() {
       username,
       password,
     );
-
-    // const { success, error } = await getToken(username, password);
-    // setLoading(false);
+    setLoading(false);
 
     if (success) {
-      navigate("/");
+      navigate("/signin");
     } else {
       setError(error);
     }

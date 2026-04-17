@@ -207,6 +207,21 @@ export const getTable = async (tableName, projectId) => {
   }
 };
 
+export const getTables = async (projectId = 1) => {
+  try {
+    const response = await fetch(`${BASE_URL}/datatables/?project_id=${projectId}`);
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+    const json = await response.json();
+    return json.data;
+  } catch (error) {
+    console.error("Error fetching table:", error);
+    return null;
+  }
+};
+
+
 // src/api/projects.js
 
 export const getProjects = async ({ userId = null, username = null, name = null } = {}) => {

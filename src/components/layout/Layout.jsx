@@ -1,23 +1,39 @@
 import { React, useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { verifyToken } from "../../api/auth";
 
 const Layout = () => {
   const [checking, setChecking] = useState(true);
   const navigate = useNavigate();
 
+  const location = useLocation();
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     verifyToken(token).then((valid) => {
       if (!valid) {
-        navigate("/signin");
+        localStorage.removeItem("token");
+        navigate("/signin", { replace: true });
       } else {
         setChecking(false); // ← only stop checking if valid
       }
     });
   }, []);
+
+  function isTokenValid() {
+    const token = localStorage.getItem("token");
+    if (!token) return false;
+    const { exp } = JSON.parse(atob(token.split(".")[1]));
+    return Date.now() / 1000 < exp;
+  }
+
+  useEffect(() => {
+    if (!checking && !isTokenValid()) {
+      navigate("/signin", { replace: true });
+    }
+  }, [location]);
 
   if (checking)
     return (

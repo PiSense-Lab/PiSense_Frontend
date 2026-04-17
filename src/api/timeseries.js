@@ -244,7 +244,7 @@ export const getProjects = async ({ userId = null, username = null, name = null 
       if (userId) params.append("user_id", userId);
       
 
-      const response = await fetch(`${BASE_URL}/projects?${params}`);
+      const response = await fetch(`${BASE_URL}/users/get_user_projects?user_id=${userId}`);
       if (response.ok) {
         const data = await response.json();
         const userProjects = Array.isArray(data)

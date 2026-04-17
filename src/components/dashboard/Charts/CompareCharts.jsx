@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { DualMetricSelectPanel } from "./chart-support/DualMetricSelectPanel";
+import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
 
 export function GenerateCompareChart({ jsonData }) {
   const result = buildTimeSeries(jsonData);
@@ -21,6 +22,8 @@ export function GenerateCompareChart({ jsonData }) {
   // Default: first metric on left, second on right (if exists)
   const [leftMetric, setLeftMetric] = useState(metricKeys[0] || "");
   const [rightMetric, setRightMetric] = useState(metricKeys[1] || "");
+  const [leftColor, setLeftColor] = useState("#3b82f6");
+  const [rightColor, setRightColor] = useState("#22c55e");
 
   if (!result || metricKeys.length === 0) {
     return <div>No valid time-series data found.</div>;
@@ -47,24 +50,27 @@ export function GenerateCompareChart({ jsonData }) {
         getMetricLabel={getMetricLabel}
       />
 
+      <div className="mb-2 flex flex-wrap items-center gap-4">
+        <ColorCodingPanel
+          label="Left axis color:"
+          value={leftColor}
+          onChange={setLeftColor}
+        />
+        <ColorCodingPanel
+          label="Right axis color:"
+          value={rightColor}
+          onChange={setRightColor}
+        />
+      </div>
+
       {/* Dual Y-Axis Chart */}
       {leftMetric && rightMetric && leftMetric !== rightMetric && (
         <>
-          <div
-            style={{
-              marginBottom: 8,
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "12px",
-              flexWrap: "wrap",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
-          >
-            <span style={{ color: "hsl(210, 70%, 50%)" }}>
+          <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold">
+            <span className="min-w-0 truncate" style={{ color: leftColor }}>
               Left Axis: {getMetricLabel(leftMetric)}
             </span>
-            <span style={{ color: "hsl(120, 70%, 50%)" }}>
+            <span className="min-w-0 truncate" style={{ color: rightColor }}>
               Right Axis: {getMetricLabel(rightMetric)}
             </span>
           </div>
@@ -108,7 +114,7 @@ export function GenerateCompareChart({ jsonData }) {
                 type="monotone"
                 dataKey={leftMetric}
                 name={getMetricLabel(leftMetric)}
-                stroke="hsl(210, 70%, 50%)"
+                stroke={leftColor}
                 dot={false}
                 strokeWidth={2}
               />
@@ -119,7 +125,7 @@ export function GenerateCompareChart({ jsonData }) {
                 type="monotone"
                 dataKey={rightMetric}
                 name={getMetricLabel(rightMetric)}
-                stroke="hsl(120, 70%, 50%)"
+                stroke={rightColor}
                 dot={false}
                 strokeWidth={2}
               />

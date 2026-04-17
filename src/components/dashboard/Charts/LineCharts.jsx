@@ -10,11 +10,13 @@ import {
 import { useState } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { MetricSelectPanel } from "./chart-support/MetricSelectPanel";
+import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
 
 export function GenerateLineChart({ jsonData }) {
   const result = buildTimeSeries(jsonData);
   // print data to frontend console for debugging
   console.log("Chart data:", result);
+  const [lineColor, setLineColor] = useState("#3b82f6");
   const [selectedMetric, setSelectedMetric] = useState(
     result?.metricKeys?.[0] || "",
   );
@@ -62,6 +64,12 @@ export function GenerateLineChart({ jsonData }) {
         getMetricLabel={getMetricLabel}
       />
 
+      <ColorCodingPanel
+        label="Line color:"
+        value={lineColor}
+        onChange={setLineColor}
+      />
+
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
           data={result.data}
@@ -90,7 +98,7 @@ export function GenerateLineChart({ jsonData }) {
             type="monotone"
             dataKey={currentMetric}
             name={getMetricLabel(currentMetric)}
-            stroke="hsl(210, 70%, 50%)"
+            stroke={lineColor}
             dot={false}
           />
         </LineChart>

@@ -8,22 +8,47 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { useState } from "react";
+import { useEffect } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { DualMetricSelectPanel } from "./chart-support/DualMetricSelectPanel";
 import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import usePersistentState from "../../../hooks/usePersistentState";
 
-export function GenerateCompareChart({ jsonData }) {
+export function GenerateCompareChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
   console.log("Compare Chart data:", result);
 
   const metricKeys = result?.metricKeys || [];
 
-  // Default: first metric on left, second on right (if exists)
-  const [leftMetric, setLeftMetric] = useState(metricKeys[0] || "");
-  const [rightMetric, setRightMetric] = useState(metricKeys[1] || "");
-  const [leftColor, setLeftColor] = useState("#3b82f6");
-  const [rightColor, setRightColor] = useState("#22c55e");
+  const [leftMetric, setLeftMetric] = usePersistentState(
+    `${persistenceScope}:leftMetric`,
+    "",
+  );
+  const [rightMetric, setRightMetric] = usePersistentState(
+    `${persistenceScope}:rightMetric`,
+    "",
+  );
+  const [leftColor, setLeftColor] = usePersistentState(
+    `${persistenceScope}:leftColor`,
+    "#3b82f6",
+  );
+  const [rightColor, setRightColor] = usePersistentState(
+    `${persistenceScope}:rightColor`,
+    "#22c55e",
+  );
+
+  useEffect(() => {
+    if (metricKeys.length === 0) return;
+
+    if (!metricKeys.includes(leftMetric)) {
+      setLeftMetric(metricKeys[0]);
+    }
+
+    if (!metricKeys.includes(rightMetric) || rightMetric === leftMetric) {
+      const fallbackRight = metricKeys.find((key) => key !== leftMetric) || "";
+      setRightMetric(fallbackRight);
+    }
+  }, [metricKeys, leftMetric, rightMetric, setLeftMetric, setRightMetric]);
 
   if (!result || metricKeys.length === 0) {
     return <div>No valid time-series data found.</div>;

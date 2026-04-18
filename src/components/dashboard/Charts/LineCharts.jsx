@@ -7,23 +7,34 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { useState } from "react";
+import { useEffect } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { MetricSelectPanel } from "./chart-support/MetricSelectPanel";
 import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import usePersistentState from "../../../hooks/usePersistentState";
 
-export function GenerateLineChart({ jsonData }) {
+export function GenerateLineChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
   // print data to frontend console for debugging
   console.log("Chart data:", result);
-  const [lineColor, setLineColor] = useState("#3b82f6");
-  const [selectedMetric, setSelectedMetric] = useState(
-    result?.metricKeys?.[0] || "",
+  const [lineColor, setLineColor] = usePersistentState(
+    `${persistenceScope}:color`,
+    "#3b82f6",
+  );
+  const [selectedMetric, setSelectedMetric] = usePersistentState(
+    `${persistenceScope}:metric`,
+    "",
   );
   const metricKeys = result?.metricKeys || [];
   const currentMetric = metricKeys.includes(selectedMetric)
     ? selectedMetric
     : metricKeys[0] || "";
+
+  useEffect(() => {
+    if (metricKeys.length > 0 && !metricKeys.includes(selectedMetric)) {
+      setSelectedMetric(metricKeys[0]);
+    }
+  }, [metricKeys, selectedMetric, setSelectedMetric]);
 
   if (!result || metricKeys.length === 0) {
     return <div>No valid time-series data found.</div>;

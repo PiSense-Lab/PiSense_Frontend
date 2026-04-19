@@ -22,7 +22,7 @@ const getUserIdFromToken = (token) => {
   return payload?.id ?? payload?.id ?? payload?.sub ?? null;
 };
 
-export async function getToken(username, password, rememberMe) {
+export async function getToken(username, password, rememberMe, setLoading, setError, navigate,) {
   const formDetails = new URLSearchParams();
   formDetails.append("username", username);
   formDetails.append("password", password);

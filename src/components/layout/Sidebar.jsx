@@ -11,7 +11,7 @@ const Sidebar = () => {
     { id: 2, path: "/data", name: "Data", icon: LuChartLine },
   ];
   return (
-    <div className="flex flex-col w-16 md:w-56 fixed left-0 top-0 z-50 h-screen pt-8 px-4 bg-white dark:bg-midnight">
+    <div className="flex flex-col w-16 md:w-56 fixed left-0 top-0 z-50 h-full pt-8 px-4 bg-white dark:bg-midnight">
       {/* LOGO */}
       <NavLink to="/" end className="mb-8 block">
         <img

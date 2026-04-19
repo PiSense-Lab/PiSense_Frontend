@@ -1,4 +1,5 @@
 import BASE_URL from "./base_url";
+
 import { ensureDailyWeatherCache } from "./timeseries";
 
 const decodeJwtPayload = (token) => {
@@ -22,7 +23,7 @@ const getUserIdFromToken = (token) => {
   return payload?.id ?? payload?.id ?? payload?.sub ?? null;
 };
 
-export async function getToken(username, password, rememberMe, setLoading, setError, navigate,) {
+export async function getToken(username, password, rememberMe) {
   const formDetails = new URLSearchParams();
   formDetails.append("username", username);
   formDetails.append("password", password);
@@ -53,8 +54,7 @@ export async function getToken(username, password, rememberMe, setLoading, setEr
       } catch (cacheError) {
         console.warn("Weather cache initialization failed on login:", cacheError);
       }
-
-      navigate("/");
+      return { success: true, token: data.access_token };
     } else {
       const errorData = await response.json();
       return {

@@ -34,7 +34,6 @@ export function DualMetricSelectPanel({
               </option>
             ))}
           </select>
-          <div className="mt-1 h-4 w-4 rounded-sm bg-[hsl(210,70%,50%)]" />
         </div>
 
         <div>
@@ -56,7 +55,6 @@ export function DualMetricSelectPanel({
               </option>
             ))}
           </select>
-          <div className="mt-1 h-4 w-4 rounded-sm bg-[hsl(120,70%,50%)]" />
         </div>
 
         {leftMetric === rightMetric && (

@@ -6,21 +6,21 @@ const CHART_TYPES = [
 
 export function GraphTypeSwitcher({ chartType, onChange }) {
   return (
-    <div className="flex items-center gap-3 w-fit">
-      <p className="text-xs font-bold tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400">
+    <div className="flex w-fit items-center gap-3">
+      <p className="text-base font-semibold text-slate-700 dark:text-slate-200">
         Graph Type
       </p>
 
-      <div className="inline-flex items-center gap-1 rounded-full bg-slate-100 p-1 dark:bg-slate-800">
+      <div className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white p-1 dark:border-slate-700 dark:bg-midnight">
         {CHART_TYPES.map(({ key, label }) => (
           <button
             key={key}
             type="button"
             onClick={() => onChange(key)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
               chartType === key
                 ? "bg-sky text-white shadow-sm"
-                : "text-slate-700 dark:text-slate-300"
+                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             }`}
           >
             {label}

@@ -3,8 +3,30 @@ import SelectedDataset from "../SelectedDataset";
 import UploadButton from "../UploadButton";
 import { getDatasetsForProject } from "../../api/timeseries.js";
 
-const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles, onDatasetChange, selectedProject }) => {
+const QuickActions = ({
+  onUpload,
+  onManualSubmit,
+  setUploadFiles,
+  onDatasetChange,
+  selectedProject,
+}) => {
   const [datasets, setDatasets] = useState([]);
+  const [selectedDatasetName, setSelectedDatasetName] = useState(null);
+
+  const getDatasetStorageKey = (projectId) =>
+    `dashboard:selectedDataset:${projectId}`;
+
+  const handleDatasetChange = (datasetName) => {
+    setSelectedDatasetName(datasetName);
+    onDatasetChange(datasetName);
+
+    if (selectedProject?.project_id && datasetName) {
+      localStorage.setItem(
+        getDatasetStorageKey(selectedProject.project_id),
+        datasetName,
+      );
+    }
+  };
 
   // Fetch datasets whenever selectedProject changes
   useEffect(() => {
@@ -15,14 +37,25 @@ const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles, onDatasetChang
           setDatasets(ds);
           if (ds.length > 0) {
             console.log("Datasets fetched for project:", ds); // debug log
-            onDatasetChange(ds[0].name); // send first dataset upward by default
+            const storageKey = getDatasetStorageKey(selectedProject.project_id);
+            const savedDatasetName = localStorage.getItem(storageKey);
+            const matchedDataset = ds.find(
+              (dataset) => dataset.name === savedDatasetName,
+            );
+            const initialDatasetName = matchedDataset?.name ?? ds[0].name;
+
+            setSelectedDatasetName(initialDatasetName);
+            onDatasetChange(initialDatasetName);
           }
         } catch (err) {
           console.error("Error fetching datasets:", err);
           setDatasets([]);
+          setSelectedDatasetName(null);
+          onDatasetChange(null);
         }
       } else {
         setDatasets([]);
+        setSelectedDatasetName(null);
         onDatasetChange(null);
       }
     };
@@ -45,7 +78,11 @@ const QuickActions = ({ onUpload, onManualSubmit, setUploadFiles, onDatasetChang
       </div>
 
       {datasets.length > 0 ? (
-        <SelectedDataset datasets={datasets} onChange={onDatasetChange} />
+        <SelectedDataset
+          datasets={datasets}
+          selectedName={selectedDatasetName}
+          onChange={handleDatasetChange}
+        />
       ) : (
         <div>No datasets available for this project</div>
       )}

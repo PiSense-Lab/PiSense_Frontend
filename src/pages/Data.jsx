@@ -29,6 +29,8 @@ const Data = () => {
     fetchDatasets();
   }, []);
 
+  // get data from the backend api from projectid and put the basic table data in the datasetsmeta
+
 
   const handleViewDataset = async (dataset) => {
     if (dataset.mode === "edit") {

@@ -8,19 +8,47 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { useState } from "react";
+import { useEffect } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { DualMetricSelectPanel } from "./chart-support/DualMetricSelectPanel";
+import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import usePersistentState from "../../../hooks/usePersistentState";
 
-export function GenerateCompareChart({ jsonData }) {
+export function GenerateCompareChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
   console.log("Compare Chart data:", result);
 
   const metricKeys = result?.metricKeys || [];
 
-  // Default: first metric on left, second on right (if exists)
-  const [leftMetric, setLeftMetric] = useState(metricKeys[0] || "");
-  const [rightMetric, setRightMetric] = useState(metricKeys[1] || "");
+  const [leftMetric, setLeftMetric] = usePersistentState(
+    `${persistenceScope}:leftMetric`,
+    "",
+  );
+  const [rightMetric, setRightMetric] = usePersistentState(
+    `${persistenceScope}:rightMetric`,
+    "",
+  );
+  const [leftColor, setLeftColor] = usePersistentState(
+    `${persistenceScope}:leftColor`,
+    "#3b82f6",
+  );
+  const [rightColor, setRightColor] = usePersistentState(
+    `${persistenceScope}:rightColor`,
+    "#22c55e",
+  );
+
+  useEffect(() => {
+    if (metricKeys.length === 0) return;
+
+    if (!metricKeys.includes(leftMetric)) {
+      setLeftMetric(metricKeys[0]);
+    }
+
+    if (!metricKeys.includes(rightMetric) || rightMetric === leftMetric) {
+      const fallbackRight = metricKeys.find((key) => key !== leftMetric) || "";
+      setRightMetric(fallbackRight);
+    }
+  }, [metricKeys, leftMetric, rightMetric, setLeftMetric, setRightMetric]);
 
   if (!result || metricKeys.length === 0) {
     return <div>No valid time-series data found.</div>;
@@ -47,24 +75,27 @@ export function GenerateCompareChart({ jsonData }) {
         getMetricLabel={getMetricLabel}
       />
 
+      <div className="mb-2 flex flex-wrap items-center gap-4">
+        <ColorCodingPanel
+          label="Left axis color:"
+          value={leftColor}
+          onChange={setLeftColor}
+        />
+        <ColorCodingPanel
+          label="Right axis color:"
+          value={rightColor}
+          onChange={setRightColor}
+        />
+      </div>
+
       {/* Dual Y-Axis Chart */}
       {leftMetric && rightMetric && leftMetric !== rightMetric && (
         <>
-          <div
-            style={{
-              marginBottom: 8,
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "12px",
-              flexWrap: "wrap",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
-          >
-            <span style={{ color: "hsl(210, 70%, 50%)" }}>
+          <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold">
+            <span className="min-w-0 truncate" style={{ color: leftColor }}>
               Left Axis: {getMetricLabel(leftMetric)}
             </span>
-            <span style={{ color: "hsl(120, 70%, 50%)" }}>
+            <span className="min-w-0 truncate" style={{ color: rightColor }}>
               Right Axis: {getMetricLabel(rightMetric)}
             </span>
           </div>
@@ -108,7 +139,7 @@ export function GenerateCompareChart({ jsonData }) {
                 type="monotone"
                 dataKey={leftMetric}
                 name={getMetricLabel(leftMetric)}
-                stroke="hsl(210, 70%, 50%)"
+                stroke={leftColor}
                 dot={false}
                 strokeWidth={2}
               />
@@ -119,7 +150,7 @@ export function GenerateCompareChart({ jsonData }) {
                 type="monotone"
                 dataKey={rightMetric}
                 name={getMetricLabel(rightMetric)}
-                stroke="hsl(120, 70%, 50%)"
+                stroke={rightColor}
                 dot={false}
                 strokeWidth={2}
               />

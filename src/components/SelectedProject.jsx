@@ -23,8 +23,22 @@ const SelectedProject = ({ onProjectChange }) => {
         setProjects(allProjects);
 
         if (allProjects.length > 0) {
-          setSelectedProject(allProjects[0]);
-          onProjectChange(allProjects[0]);
+          const savedProjectId = localStorage.getItem("selectedProjectId");
+          const matchedProject = allProjects.find(
+            (project) => String(project.project_id) === String(savedProjectId),
+          );
+          const initialProject = matchedProject ?? allProjects[0];
+
+          setSelectedProject(initialProject);
+          onProjectChange(initialProject);
+          localStorage.setItem(
+            "projectid",
+            JSON.stringify(initialProject.project_id),
+          );
+          localStorage.setItem(
+            "selectedProjectId",
+            String(initialProject.project_id),
+          );
         }
       } catch (err) {
         console.error("Error fetching projects:", err);
@@ -38,6 +52,8 @@ const SelectedProject = ({ onProjectChange }) => {
   const handleProjectChange = (project) => {
     setSelectedProject(project);
     onProjectChange(project);
+    localStorage.setItem("projectid", JSON.stringify(project.project_id));
+    localStorage.setItem("selectedProjectId", String(project.project_id));
   };
 
   if (!selectedProject) return <div>Loading projects...</div>;
@@ -54,14 +70,14 @@ const SelectedProject = ({ onProjectChange }) => {
       {/* Styled Listbox */}
       <Listbox value={selectedProject} onChange={handleProjectChange}>
         <div className="flex flex-col rounded-md px-8 py-4 bg-white dark:bg-midnight">
-          <Label className="text-lg font-semibold">
-            {topBarData[0].name}
-          </Label>
+          <Label className="text-lg font-semibold">{topBarData[0].name}</Label>
 
           <div className="relative">
             <ListboxButton className="grid w-full cursor-default grid-cols-1 rounded-md bg-gray-200 dark:bg-pitch py-1.5 pr-2 pl-4 sm:text-sm/6">
               <span className="col-start-1 row-start-1 flex items-center gap-3 pr-6">
-                <span className="block truncate">{selectedProject.project_name}</span>
+                <span className="block truncate">
+                  {selectedProject.project_name}
+                </span>
               </span>
               <ChevronUpDownIcon
                 aria-hidden="true"

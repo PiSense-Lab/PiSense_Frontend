@@ -1,5 +1,4 @@
 import BASE_URL from "./base_url";
-
 import { ensureDailyWeatherCache } from "./timeseries";
 
 const decodeJwtPayload = (token) => {

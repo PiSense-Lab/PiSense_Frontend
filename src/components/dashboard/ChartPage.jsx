@@ -5,7 +5,7 @@ import { GenerateBarChart } from "./Charts/BarCharts";
 import { GenerateCompareChart } from "./Charts/CompareCharts";
 
 const ChartPage = forwardRef(function ChartPage(
-  { dataset, projectId, chartType = "line" },
+  { dataset, projectId, chartType = "line", persistenceScope },
   ref,
 ) {
   const [data, setData] = useState(null);
@@ -34,12 +34,27 @@ const ChartPage = forwardRef(function ChartPage(
   const chartComponent = (() => {
     switch (chartType) {
       case "bar":
-        return <GenerateBarChart jsonData={data} />;
+        return (
+          <GenerateBarChart
+            jsonData={data}
+            persistenceScope={`${persistenceScope}:bar`}
+          />
+        );
       case "dualAxis":
-        return <GenerateCompareChart jsonData={data} />;
+        return (
+          <GenerateCompareChart
+            jsonData={data}
+            persistenceScope={`${persistenceScope}:dualAxis`}
+          />
+        );
       case "line":
       default:
-        return <GenerateLineChart jsonData={data} />;
+        return (
+          <GenerateLineChart
+            jsonData={data}
+            persistenceScope={`${persistenceScope}:line`}
+          />
+        );
     }
   })();
 

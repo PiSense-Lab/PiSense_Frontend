@@ -7,7 +7,6 @@ import { verifyToken } from "../../api/auth";
 const Layout = () => {
   const [checking, setChecking] = useState(true);
   const navigate = useNavigate();
-
   const location = useLocation();
 
   useEffect(() => {
@@ -20,20 +19,27 @@ const Layout = () => {
         setChecking(false); // ← only stop checking if valid
       }
     });
-  }, []);
+  }, [navigate]);
 
   function isTokenValid() {
     const token = localStorage.getItem("token");
     if (!token) return false;
-    const { exp } = JSON.parse(atob(token.split(".")[1]));
-    return Date.now() / 1000 < exp;
+    try {
+      const payloadBase64 = token.split(".")[1];
+      if (!payloadBase64) return false;
+      const { exp } = JSON.parse(atob(payloadBase64));
+      return typeof exp === "number" && Date.now() / 1000 < exp;
+    } catch {
+      return false;
+    }
   }
 
   useEffect(() => {
     if (!checking && !isTokenValid()) {
+      localStorage.removeItem("token");
       navigate("/signin", { replace: true });
     }
-  }, [location]);
+  }, [checking, location, navigate]);
 
   if (checking)
     return (

@@ -7,23 +7,36 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { useState } from "react";
+import { useEffect } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { MetricSelectPanel } from "./chart-support/MetricSelectPanel";
+import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import usePersistentState from "../../../hooks/usePersistentState";
 
 const CHART_HEIGHT = 400;
 const POINT_WIDTH = 12;
 
-export function GenerateBarChart({ jsonData }) {
+export function GenerateBarChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
   console.log("Bar Chart data:", result);
-  const [selectedMetric, setSelectedMetric] = useState(
-    result?.metricKeys?.[0] || "",
+  const [barColor, setBarColor] = usePersistentState(
+    `${persistenceScope}:color`,
+    "#22c55e",
+  );
+  const [selectedMetric, setSelectedMetric] = usePersistentState(
+    `${persistenceScope}:metric`,
+    "",
   );
   const metricKeys = result?.metricKeys || [];
   const currentMetric = metricKeys.includes(selectedMetric)
     ? selectedMetric
     : metricKeys[0] || "";
+
+  useEffect(() => {
+    if (metricKeys.length > 0 && !metricKeys.includes(selectedMetric)) {
+      setSelectedMetric(metricKeys[0]);
+    }
+  }, [metricKeys, selectedMetric, setSelectedMetric]);
 
   if (!result || metricKeys.length === 0) {
     return <div>No valid time-series data found.</div>;
@@ -88,6 +101,12 @@ export function GenerateBarChart({ jsonData }) {
         getMetricLabel={getMetricLabel}
       />
 
+      <ColorCodingPanel
+        label="Bar color:"
+        value={barColor}
+        onChange={setBarColor}
+      />
+
       <div className="w-full max-w-full min-w-0">
         <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden">
           <div
@@ -128,7 +147,7 @@ export function GenerateBarChart({ jsonData }) {
                   key={currentMetric}
                   dataKey={currentMetric}
                   name={getMetricLabel(currentMetric)}
-                  fill="hsl(120, 70%, 50%)"
+                  fill={barColor}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

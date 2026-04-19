@@ -1,14 +1,21 @@
 import React, { useRef } from "react";
-import { useState } from "react";
 import domtoimage from "dom-to-image-more";
 import ChartPage from "./ChartPage";
 import { ChartTitleEditor } from "./Charts/chart-support/ChartTitleEditor";
 import { ExportGraphButton } from "./Charts/chart-support/ExportGraphButton";
 import { GraphTypeSwitcher } from "./Charts/chart-support/GraphTypeSwitcher";
+import usePersistentState from "../../hooks/usePersistentState";
 
 const Graph = ({ projectId, dataset }) => {
-  const [chartType, setChartType] = useState("line");
-  const [chartTitle, setChartTitle] = useState("");
+  const scope = `dashboard:${projectId ?? "no-project"}:${dataset ?? "no-dataset"}`;
+  const [chartType, setChartType] = usePersistentState(
+    `${scope}:chartType`,
+    "line",
+  );
+  const [chartTitle, setChartTitle] = usePersistentState(
+    `${scope}:chartTitle`,
+    "",
+  );
   const chartRef = useRef(null);
 
   const handleExportChart = async () => {
@@ -76,6 +83,7 @@ const Graph = ({ projectId, dataset }) => {
           dataset={dataset}
           projectId={projectId}
           chartType={chartType}
+          persistenceScope={scope}
         />
       </div>
 

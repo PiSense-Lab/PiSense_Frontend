@@ -34,7 +34,7 @@ function Signin() {
     if (!validateForm()) return;
     setLoading(true);
 
-    const { success, error, token } = await getToken(
+    const { success, error, token, userId } = await getToken(
       username,
       password,
       rememberMe,
@@ -43,6 +43,10 @@ function Signin() {
 
     if (success) {
       localStorage.setItem("token", token);
+      localStorage.setItem("username", username);
+      if (userId) {
+        localStorage.setItem("userId", String(userId));
+      }
       navigate("/");
     } else {
       setError(error);

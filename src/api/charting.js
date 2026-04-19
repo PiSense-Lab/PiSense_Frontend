@@ -10,8 +10,7 @@ export function buildTimeSeries(json) {
   const metricKeys = detectNumericFields(data, timeConfig);
 
   const normalized = data.map(row => {
-    // print the row to frontend console for debugging
-    console.log('Processing row:', row);
+  
     const time = buildTimestamp(row, timeConfig);
 
     const entry = { time };
@@ -99,8 +98,6 @@ function buildTimestamp(row, config) {
   if (config.type === "composite") {
     return new Date(`${row.date}T${row.time}`).toISOString();
   }
-  //print row[config.key] to frontend console for debugging
-  console.log('Time value:', row[config.key]);
   return new Date(row[config.key]).toISOString();
 }
 

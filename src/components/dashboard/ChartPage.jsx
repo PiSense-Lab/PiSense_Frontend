@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
-import BASE_URL from "../../api/base_url";
-import { GenerateLineChart } from './Charts';
+import { useEffect, useState, forwardRef } from "react";
 import { getTable } from "../../api/timeseries";
+import { GenerateLineChart } from "./Charts/LineCharts";
+import { GenerateBarChart } from "./Charts/BarCharts";
+import { GenerateCompareChart } from "./Charts/CompareCharts";
 
-export default function ChartPage({ dataset }) {
+const ChartPage = forwardRef(function ChartPage(
+  { dataset, projectId, chartType = "line", persistenceScope },
+  ref,
+) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -12,22 +16,49 @@ export default function ChartPage({ dataset }) {
       try {
         if (!dataset) return;
 
-        const res = await getTable(dataset); // 🔥 dynamic now
+        const res = await getTable(dataset, projectId);
         setData(res);
       } catch (err) {
-        console.error('API error:', err);
+        console.error("API error:", err);
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [dataset]); // 🔥 re-fetch when dataset changes
+  }, [dataset, projectId]);
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>No data</div>;
 
-  // based on usr selection, pass the json data to bar chart or line or whatever chart
+  const chartComponent = (() => {
+    switch (chartType) {
+      case "bar":
+        return (
+          <GenerateBarChart
+            jsonData={data}
+            persistenceScope={`${persistenceScope}:bar`}
+          />
+        );
+      case "dualAxis":
+        return (
+          <GenerateCompareChart
+            jsonData={data}
+            persistenceScope={`${persistenceScope}:dualAxis`}
+          />
+        );
+      case "line":
+      default:
+        return (
+          <GenerateLineChart
+            jsonData={data}
+            persistenceScope={`${persistenceScope}:line`}
+          />
+        );
+    }
+  })();
 
-  return <GenerateLineChart jsonData={data} />;
-}
+  return <div ref={ref}>{chartComponent}</div>;
+});
+
+export default ChartPage;

@@ -1,4 +1,26 @@
 import BASE_URL from "./base_url";
+import { ensureDailyWeatherCache } from "./timeseries";
+
+const decodeJwtPayload = (token) => {
+  if (!token) return null;
+  try {
+    const [, payloadBase64] = token.split(".");
+    if (!payloadBase64) return null;
+
+    const payload = atob(
+      payloadBase64.replace(/-/g, "+").replace(/_/g, "/"),
+    );
+
+    return JSON.parse(decodeURIComponent(escape(payload)));
+  } catch {
+    return null;
+  }
+};
+
+const getUserIdFromToken = (token) => {
+  const payload = decodeJwtPayload(token);
+  return payload?.id ?? payload?.id ?? payload?.sub ?? null;
+};
 
 export async function getToken(username, password, rememberMe) {
   const formDetails = new URLSearchParams();
@@ -18,7 +40,15 @@ export async function getToken(username, password, rememberMe) {
 
     if (response.ok) {
       const data = await response.json();
-      return { success: true, token: data.access_token };
+      const userId = data.id ?? getUserIdFromToken(data.access_token);
+
+      try {
+        await ensureDailyWeatherCache();
+      } catch (cacheError) {
+        console.warn("Weather cache initialization failed on login:", cacheError);
+      }
+
+      return { success: true, token: data.access_token, userId };
     } else {
       const errorData = await response.json();
       return {

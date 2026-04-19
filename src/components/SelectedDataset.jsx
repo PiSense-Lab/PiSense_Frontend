@@ -9,13 +9,30 @@ import {
 import { ChevronUpDownIcon } from "@heroicons/react/16/solid";
 import { CheckIcon } from "@heroicons/react/20/solid";
 
-const SelectedDataset = ({ datasets, onChange }) => {
-  const [selected, setSelected] = useState(datasets[0]);
+const SelectedDataset = ({ datasets, selectedName, onChange }) => {
+  const [selected, setSelected] = useState(() => {
+    return (
+      datasets.find((dataset) => dataset.name === selectedName) ||
+      datasets[0] ||
+      null
+    );
+  });
 
   useEffect(() => {
+    const nextSelected =
+      datasets.find((dataset) => dataset.name === selectedName) ||
+      datasets[0] ||
+      null;
+    setSelected(nextSelected);
+  }, [datasets, selectedName]);
+
+  useEffect(() => {
+    if (!selected) return;
     console.log("Updated dataset:", selected);
-    onChange?.(selected.name); // 🔥 send upward
+    onChange?.(selected.name);
   }, [onChange, selected]);
+
+  if (!selected) return null;
 
   return (
     <Listbox value={selected} onChange={setSelected}>

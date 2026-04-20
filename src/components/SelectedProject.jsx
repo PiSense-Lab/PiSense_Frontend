@@ -59,7 +59,7 @@ const SelectedProject = ({ onProjectChange }) => {
   if (!selectedProject) return <div>Loading projects...</div>;
   localStorage.setItem("projectid", JSON.stringify(selectedProject.project_id));
   const topBarData = [
-    { name: "Active Project:", value: selectedProject.project_name },
+    { name: "Active Project:", value: selectedProject.name },
     { name: "Last Update:", value: selectedProject.last_update || "N/A" },
     { name: "Total Datasets:", value: selectedProject.total_datasets || "0" },
     { name: "Anomalies:", value: selectedProject.anomalies || "0" },
@@ -76,7 +76,7 @@ const SelectedProject = ({ onProjectChange }) => {
             <ListboxButton className="grid w-full cursor-default grid-cols-1 rounded-md bg-gray-200 dark:bg-pitch py-1.5 pr-2 pl-4 sm:text-sm/6">
               <span className="col-start-1 row-start-1 flex items-center gap-3 pr-6">
                 <span className="block truncate">
-                  {selectedProject.project_name}
+                  {selectedProject.name}
                 </span>
               </span>
               <ChevronUpDownIcon
@@ -93,7 +93,7 @@ const SelectedProject = ({ onProjectChange }) => {
                   className="group relative cursor-pointer select-none py-2 pl-4 pr-10 text-gray-900 dark:text-gray-100 data-focus:bg-sky data-focus:text-white"
                 >
                   <span className="block truncate font-normal group-data-selected:font-semibold">
-                    {project.project_name}
+                    {project.name}
                   </span>
 
                   <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-sky group-not-data-selected:hidden group-data-focus:text-white">

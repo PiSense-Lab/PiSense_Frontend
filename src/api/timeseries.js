@@ -227,7 +227,7 @@ export const getTables = async (projectId = 1) => {
 export const getProjects = async ({ userId = null, name = null } = {}) => {
   const weatherProject = {
     project_id: "weather-1",
-    project_name: "Weather",
+    name: "Weather",
     last_update: new Date().toISOString().split("T")[0],
     total_datasets: 4,
     anomalies: 0,
@@ -247,6 +247,7 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
       const response = await fetch(`${BASE_URL}/users/get_user_projects?user_id=${userId}`);
       if (response.ok) {
         const data = await response.json();
+        projects.push(...data.data);
         const userProjects = Array.isArray(data)
           ? data
           : Array.isArray(data.projects)
@@ -255,7 +256,7 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
 
         const filteredUserProjects = userProjects.filter(
           (project) =>
-            project.project_name !== weatherProject.project_name &&
+            project.name !== weatherProject.name &&
             String(project.project_id) !== String(weatherProject.project_id),
         );
 
@@ -271,11 +272,6 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
     }
   }
 
-  // if (name) {
-  //   return projects.filter((p) =>
-  //     p.project_name.toLowerCase().includes(name.toLowerCase()),
-  //   );
-  // }
   console.log("Fetched projects:", projects);
   return projects;
 };
@@ -389,8 +385,8 @@ export const getDatasetsForProject = async (projectId) => {
   if (!isWeatherProject) {
     // For non-weather projects, fetch datasets from backend = http://192.168.1.90:8000/datatables/?project_id=3
     try {
-      const params = new URLSearchParams({ project_id: projectId });
-      const response = await fetch(`${BASE_URL}/datatables?${params}`);
+      // const params = new URLSearchParams({ project_id: projectId });
+      const response = await fetch(`${BASE_URL}/datatables?project_id=${projectId}`);
       if (!response.ok) {
         throw new Error(`Server responded with status ${response.status}`);
       }

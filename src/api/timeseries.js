@@ -224,7 +224,7 @@ export const getTables = async (projectId = 1) => {
 
 // src/api/projects.js
 
-export const getProjects = async ({ userId = null, username = null, name = null } = {}) => {
+export const getProjects = async ({ userId = null, name = null } = {}) => {
   const weatherProject = {
     project_id: "weather-1",
     project_name: "Weather",
@@ -271,12 +271,12 @@ export const getProjects = async ({ userId = null, username = null, name = null 
     }
   }
 
-  if (name) {
-    return projects.filter((p) =>
-      p.project_name.toLowerCase().includes(name.toLowerCase()),
-    );
-  }
-
+  // if (name) {
+  //   return projects.filter((p) =>
+  //     p.project_name.toLowerCase().includes(name.toLowerCase()),
+  //   );
+  // }
+  console.log("Fetched projects:", projects);
   return projects;
 };
 

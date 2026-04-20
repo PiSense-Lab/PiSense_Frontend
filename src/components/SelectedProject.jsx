@@ -57,6 +57,7 @@ const SelectedProject = ({ onProjectChange }) => {
   };
 
   if (!selectedProject) return <div>Loading projects...</div>;
+  localStorage.setItem("projectid", JSON.stringify(selectedProject.project_id));
   const topBarData = [
     { name: "Active Project:", value: selectedProject.project_name },
     { name: "Last Update:", value: selectedProject.last_update || "N/A" },

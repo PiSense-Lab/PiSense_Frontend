@@ -40,15 +40,20 @@ export async function getToken(username, password, rememberMe) {
 
     if (response.ok) {
       const data = await response.json();
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("username", username);
+
       const userId = data.id ?? getUserIdFromToken(data.access_token);
+      if (userId) {
+        localStorage.setItem("userId", String(userId));
+      }
 
       try {
         await ensureDailyWeatherCache();
       } catch (cacheError) {
         console.warn("Weather cache initialization failed on login:", cacheError);
       }
-
-      return { success: true, token: data.access_token, userId };
+      return { success: true, token: data.access_token };
     } else {
       const errorData = await response.json();
       return {

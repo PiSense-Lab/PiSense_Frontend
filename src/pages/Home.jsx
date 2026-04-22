@@ -55,10 +55,10 @@ const Home = () => {
       </div>
 
       {/* AIInsight + SystemMonitor */}
-      <div className="grid md:grid-cols-2 gap-4">
+      {/* <div className="grid md:grid-cols-2 gap-4">
         <AIInsight projectId={selectedProject?.project_id} />
         <SystemMonitor projectId={selectedProject?.project_id} />
-      </div>
+      </div> */}
     </div>
   );
 };

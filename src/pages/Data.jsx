@@ -54,7 +54,7 @@ const Data = () => {
       }
 
       const projectid = JSON.parse(localStorage.getItem("projectid"));
-      const result = await getTable(dataset.name, projectid);
+      const result = await getTable(dataset, projectid);
 
       if (!result) {
         console.error("Failed to load dataset");
@@ -130,7 +130,7 @@ const Data = () => {
                     className="hover:bg-slate-100/50 dark:hover:bg-white/5 group"
                   >
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                      {ds.name}
+                      {ds.name || ds}
                     </td>
                     <td className="p-4">
                       <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">
@@ -178,7 +178,7 @@ const Data = () => {
           open={!!selectedDataset}
           onClose={() => setSelectedDataset(null)}
           mode={selectedDataset.mode || "create"} // default to create
-          existingDatasetName={selectedDataset.name} // used by the API in edit mode
+          existingDatasetName={selectedDataset} // used by the API in edit mode
           initialData={Array.isArray(selectedDataset.data) ? selectedDataset.data : []}
         />
       )}

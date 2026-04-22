@@ -11,16 +11,12 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 
 const SelectedDataset = ({ datasets, selectedName, onChange }) => {
   const [selected, setSelected] = useState(() => {
-    return (
-      datasets.find((dataset) => dataset.name === selectedName) ||
-      datasets[0] ||
-      null
-    );
+    return datasets.find((dataset) => dataset === selectedName) || datasets[0] || null;
   });
 
   useEffect(() => {
     const nextSelected =
-      datasets.find((dataset) => dataset.name === selectedName) ||
+      datasets.find((dataset) => dataset === selectedName) ||
       datasets[0] ||
       null;
     setSelected(nextSelected);
@@ -28,8 +24,7 @@ const SelectedDataset = ({ datasets, selectedName, onChange }) => {
 
   useEffect(() => {
     if (!selected) return;
-    console.log("Updated dataset:", selected);
-    onChange?.(selected.name);
+    onChange?.(selected);
   }, [onChange, selected]);
 
   if (!selected) return null;
@@ -40,7 +35,7 @@ const SelectedDataset = ({ datasets, selectedName, onChange }) => {
       <div className="relative">
         <ListboxButton className="grid w-full cursor-default grid-cols-1 rounded-md bg-gray-200 dark:bg-pitch py-1.5 pr-2 pl-4 sm:text-sm/6">
           <span className="col-start-1 row-start-1 flex items-center gap-3 pr-6">
-            <span className="block truncate">{selected.name}</span>
+            <span className="block truncate">{selected}</span>
           </span>
           <ChevronUpDownIcon
             aria-hidden="true"
@@ -54,13 +49,13 @@ const SelectedDataset = ({ datasets, selectedName, onChange }) => {
         >
           {datasets.map((dataset) => (
             <ListboxOption
-              key={dataset.id}
+              key={dataset}
               value={dataset}
               className="group relative cursor-default py-2 pr-9 pl-4 select-none data-focus:bg-sky data-focus:text-white"
             >
               <div className="flex items-center">
                 <span className="block truncate font-normal group-data-selected:font-semibold ">
-                  {dataset.name}
+                  {dataset}
                 </span>
               </div>
 

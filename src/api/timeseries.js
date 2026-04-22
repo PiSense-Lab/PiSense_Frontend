@@ -195,7 +195,7 @@ export const getTable = async (tableName, projectId) => {
   }
 
   try {
-    const response = await fetch(`${BASE_URL}/datatables/${tableName}`);
+    const response = await fetch(`${BASE_URL}/datatables/${tableName}?project_id=${projectId}`);
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
@@ -226,7 +226,7 @@ export const getTables = async (projectId = 1) => {
 
 export const getProjects = async ({ userId = null, name = null } = {}) => {
   const weatherProject = {
-    project_id: "weather-1",
+    id: "weather-1",
     name: "Weather",
     last_update: new Date().toISOString().split("T")[0],
     total_datasets: 4,
@@ -257,7 +257,7 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
         const filteredUserProjects = userProjects.filter(
           (project) =>
             project.name !== weatherProject.name &&
-            String(project.project_id) !== String(weatherProject.project_id),
+            String(project.id) !== String(weatherProject.id),
         );
 
         projects.push(...filteredUserProjects);
@@ -272,7 +272,6 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
     }
   }
 
-  console.log("Fetched projects:", projects);
   return projects;
 };
 
@@ -382,6 +381,7 @@ export const getDatasetsForProject = async (projectId) => {
   const isWeatherProject =
     String(projectId) === "weather-1";
 
+
   if (!isWeatherProject) {
     // For non-weather projects, fetch datasets from backend = http://192.168.1.90:8000/datatables/?project_id=3
     try {
@@ -391,7 +391,8 @@ export const getDatasetsForProject = async (projectId) => {
         throw new Error(`Server responded with status ${response.status}`);
       }
       const json = await response.json();
-      return Array.isArray(json.data) ? json.data : [];
+
+      return Array.isArray(json) ? json : [];
     } catch (error) {
       console.error("Error fetching datasets for project:", error);
       return [];
@@ -400,24 +401,11 @@ export const getDatasetsForProject = async (projectId) => {
   }
 
   // Return datasets formatted for UI consumption
-  return [
-      {
-        id: "weather_forecast_hourly",
-        name: "Hourly Weather Forecast",
-      },
-      {
-        id: "weather_forecast_daily",
-        name: "Daily Weather Forecast",
-        
-      },
-      {
-        id: "weather_historical_hourly",
-        name: "Hourly Historical Weather",
-      },
-      {
-        id: "weather_historical_daily",
-        name: "Daily Historical Weather",
-      },
+  return [      
+        "Hourly Weather Forecast",
+        "Daily Weather Forecast",
+        "Hourly Historical Weather",
+        "Daily Historical Weather",
     ];
  
 };

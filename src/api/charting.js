@@ -1,6 +1,5 @@
 export function buildTimeSeries(json) {
   //print the raw JSON to frontend console for debugging
-  console.log('Raw JSON input:', json);
   const data = extractArray(json);
   if (!data || data.length === 0) return null;
 

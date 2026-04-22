@@ -25,7 +25,7 @@ const SelectedProject = ({ onProjectChange }) => {
         if (allProjects.length > 0) {
           const savedProjectId = localStorage.getItem("selectedProjectId");
           const matchedProject = allProjects.find(
-            (project) => String(project.project_id) === String(savedProjectId),
+            (project) => String(project.id) === String(savedProjectId),
           );
           const initialProject = matchedProject ?? allProjects[0];
 
@@ -33,11 +33,11 @@ const SelectedProject = ({ onProjectChange }) => {
           onProjectChange(initialProject);
           localStorage.setItem(
             "projectid",
-            JSON.stringify(initialProject.project_id),
+            JSON.stringify(initialProject.id),
           );
           localStorage.setItem(
             "selectedProjectId",
-            String(initialProject.project_id),
+            String(initialProject.id),
           );
         }
       } catch (err) {
@@ -52,12 +52,12 @@ const SelectedProject = ({ onProjectChange }) => {
   const handleProjectChange = (project) => {
     setSelectedProject(project);
     onProjectChange(project);
-    localStorage.setItem("projectid", JSON.stringify(project.project_id));
-    localStorage.setItem("selectedProjectId", String(project.project_id));
+    localStorage.setItem("projectid", JSON.stringify(project.id));
+    localStorage.setItem("selectedProjectId", String(project.id));
   };
 
   if (!selectedProject) return <div>Loading projects...</div>;
-  localStorage.setItem("projectid", JSON.stringify(selectedProject.project_id));
+  localStorage.setItem("projectid", JSON.stringify(selectedProject.id));
   const topBarData = [
     { name: "Active Project:", value: selectedProject.name },
     { name: "Last Update:", value: selectedProject.last_update || "N/A" },
@@ -88,7 +88,7 @@ const SelectedProject = ({ onProjectChange }) => {
             <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-midnight py-1 shadow-lg ring-1 ring-black/5 focus:outline-none text-sm">
               {projects.map((project) => (
                 <ListboxOption
-                  key={project.project_id}
+                  key={project.id}
                   value={project}
                   className="group relative cursor-pointer select-none py-2 pl-4 pr-10 text-gray-900 dark:text-gray-100 data-focus:bg-sky data-focus:text-white"
                 >

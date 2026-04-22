@@ -20,9 +20,9 @@ const QuickActions = ({
     setSelectedDatasetName(datasetName);
     onDatasetChange(datasetName);
 
-    if (selectedProject?.project_id && datasetName) {
+    if (selectedProject?.id && datasetName) {
       localStorage.setItem(
-        getDatasetStorageKey(selectedProject.project_id),
+        getDatasetStorageKey(selectedProject.id),
         datasetName,
       );
     }
@@ -31,18 +31,17 @@ const QuickActions = ({
   // Fetch datasets whenever selectedProject changes
   useEffect(() => {
     const fetchDatasets = async () => {
-      if (selectedProject?.project_id) {
+      if (selectedProject?.id) {
         try {
-          const ds = await getDatasetsForProject(selectedProject.project_id);
+          const ds = await getDatasetsForProject(selectedProject.id);
           setDatasets(ds);
           if (ds.length > 0) {
-            console.log("Datasets fetched for project:", ds); // debug log
-            const storageKey = getDatasetStorageKey(selectedProject.project_id);
+            const storageKey = getDatasetStorageKey(selectedProject.id);
             const savedDatasetName = localStorage.getItem(storageKey);
             const matchedDataset = ds.find(
-              (dataset) => dataset.name === savedDatasetName,
+              (dataset) => dataset === savedDatasetName,
             );
-            const initialDatasetName = matchedDataset?.name ?? ds[0].name;
+            const initialDatasetName = matchedDataset ?? ds[0];
 
             setSelectedDatasetName(initialDatasetName);
             onDatasetChange(initialDatasetName);

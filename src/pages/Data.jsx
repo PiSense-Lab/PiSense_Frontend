@@ -55,6 +55,7 @@ const Data = () => {
 
       const projectid = JSON.parse(localStorage.getItem("projectid"));
       const result = await getTable(dataset, projectid);
+      console.log("Fetched dataset for viewing/editing:", result);
 
       if (!result) {
         console.error("Failed to load dataset");

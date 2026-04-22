@@ -195,12 +195,31 @@ export const getTable = async (tableName, projectId) => {
   }
 
   try {
-    const response = await fetch(`${BASE_URL}/datatables/${tableName}?project_id=${projectId}`);
+    const response = await fetch(
+      `${BASE_URL}/datatables/${encodeURIComponent(tableName)}?project_id=${projectId}`,
+    );
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
     const json = await response.json();
-    return json.data;
+
+    const extractTableData = (payload) => {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== "object") return null;
+      if (Array.isArray(payload[tableName])) return payload[tableName];
+      if (Array.isArray(payload.data)) return payload.data;
+      if (payload.data && typeof payload.data === "object") {
+        if (Array.isArray(payload.data[tableName])) return payload.data[tableName];
+      }
+
+      for (const value of Object.values(payload)) {
+        if (Array.isArray(value)) return value;
+      }
+
+      return null;
+    };
+
+    return extractTableData(json);
   } catch (error) {
     console.error("Error fetching table:", error);
     return null;
@@ -214,7 +233,7 @@ export const getTables = async (projectId = 1) => {
       throw new Error(`Server responded with status ${response.status}`);
     }
     const json = await response.json();
-    return json.data;
+    return json;
   } catch (error) {
     console.error("Error fetching table:", error);
     return null;

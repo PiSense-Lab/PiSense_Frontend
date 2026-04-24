@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import RoundButton from "../components/RoundButton";
 import { useNavigate } from "react-router-dom";
-import { getToken, verifyToken, createUser } from "../api/auth";
+import { createUser } from "../api/auth";
 
 function Signup() {
   const [firstName, setFirstName] = useState("");

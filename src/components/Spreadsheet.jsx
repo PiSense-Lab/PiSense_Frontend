@@ -64,7 +64,7 @@ const Spreadsheet = ({
       id: `row-${i}`,
       cells: { "col-0": "" },
     }));
-
+    console.log("Initial dat", initialData.data)
     // Prefer server data if provided
     if (mode === "edit" && initialData) {
       return transformDataToTable(initialData);

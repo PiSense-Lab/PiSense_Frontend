@@ -39,7 +39,7 @@ const Home = () => {
         <div className="flex-2 min-w-0">
           <Graph
             data={processedData}
-            projectId={activeProject?.project_id}
+            projectId={activeProject?.id}
             dataset={selectedDataset}
           />
         </div>
@@ -56,8 +56,8 @@ const Home = () => {
 
       {/* AIInsight + SystemMonitor */}
       {/* <div className="grid md:grid-cols-2 gap-4">
-        <AIInsight projectId={activeProject?.project_id} />
-        <SystemMonitor projectId={activeProject?.project_id} />
+        <AIInsight projectId={activeProject?.id} />
+        <SystemMonitor projectId={activeProject?.id} />
       </div> */}
     </div>
   );

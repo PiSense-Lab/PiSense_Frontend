@@ -68,6 +68,7 @@ const Data = () => {
       setSelectedDataset(dataset);
     }
   };
+  console.log("Selected dataset:", selectedDataset);
 
   return (
     <div className="p-4 flex flex-col gap-4">

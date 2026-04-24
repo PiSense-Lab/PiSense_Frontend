@@ -21,7 +21,7 @@ export function MetricSelectPanel({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="min-w-[220px] rounded-md border border-slate-300 bg-white px-3 py-2 text-base font-medium text-slate-900 focus:outline-none dark:border-slate-700 dark:bg-midnight dark:text-slate-100"
+        className="min-w-55 rounded-md bg-slate-200 px-3 py-2 text-base font-medium focus:outline-none focus:ring-1 focus:ring-sky dark:border-slate-700 dark:bg-pitch disabled:opacity-50"
       >
         {metricKeys.map((key) => (
           <option key={key} value={key}>

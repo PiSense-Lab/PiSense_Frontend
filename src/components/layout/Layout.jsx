@@ -8,6 +8,7 @@ const Layout = () => {
   const [checking, setChecking] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const [activeProject, setActiveProject] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -53,10 +54,10 @@ const Layout = () => {
       <Sidebar />
 
       <div className="w-full ml-16 md:ml-56 ">
-        <Header />
+        <Header onProjectChange={setActiveProject} />
 
         <div className="pt-22 px-4 pb-4 h-auto  ">
-          <Outlet />
+          <Outlet context={{ activeProject }} />
         </div>
       </div>
     </div>

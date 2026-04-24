@@ -14,6 +14,7 @@ import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
 import usePersistentState from "../../../hooks/usePersistentState";
 
 const CHART_HEIGHT = 400;
+const POINT_WIDTH = 12;
 
 export function GenerateBarChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
@@ -26,10 +27,10 @@ export function GenerateBarChart({ jsonData, persistenceScope }) {
     `${persistenceScope}:metric`,
     "",
   );
-  const metricKeys = result?.metricKeys || [];
-  const currentMetric = metricKeys.includes(selectedMetric)
+  const metricKeys = result?.metricKeys;
+  const currentMetric = metricKeys?.includes(selectedMetric)
     ? selectedMetric
-    : metricKeys[0] || "";
+    : metricKeys?.[0] || "";
 
   useEffect(() => {
     if (metricKeys.length > 0 && !metricKeys.includes(selectedMetric)) {
@@ -37,7 +38,7 @@ export function GenerateBarChart({ jsonData, persistenceScope }) {
     }
   }, [metricKeys, selectedMetric, setSelectedMetric]);
 
-  if (!result || metricKeys.length === 0) {
+  if (!result || !metricKeys || metricKeys.length === 0) {
     return <div>No valid time-series data found.</div>;
   }
 
@@ -65,6 +66,9 @@ export function GenerateBarChart({ jsonData, persistenceScope }) {
 
     return Math.min(92, Math.max(50, maxChars * 8 + 10));
   })();
+
+  // Keep panel size stable; only the inner plotting canvas becomes scrollable.
+  const chartWidth = Math.max(result.data.length * POINT_WIDTH, 1);
 
   const formatXAxisTime = (value) => {
     const date = new Date(value);
@@ -103,44 +107,52 @@ export function GenerateBarChart({ jsonData, persistenceScope }) {
         onChange={setBarColor}
       />
 
-      <div className="w-full min-w-0">
-        <div style={{ height: CHART_HEIGHT }} className="w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={result.data}
-              margin={{ top: 10, right: 12, left: 8, bottom: 0 }}
-              barCategoryGap="20%"
-              barGap={1}
-              maxBarSize={18}
-            >
-              <CartesianGrid strokeDasharray="5 5" />
+      <div className="w-full max-w-full min-w-0">
+        <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden">
+          <div
+            style={{
+              width: chartWidth,
+              minWidth: "100%",
+              height: CHART_HEIGHT,
+            }}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={result.data}
+                margin={{ top: 10, right: 12, left: 8, bottom: 0 }}
+                barCategoryGap="20%"
+                barGap={1}
+                maxBarSize={18}
+              >
+                <CartesianGrid strokeDasharray="5 5" />
 
-              <XAxis
-                dataKey="time"
-                tickFormatter={formatXAxisTime}
-                minTickGap={24}
-              />
+                <XAxis
+                  dataKey="time"
+                  tickFormatter={formatXAxisTime}
+                  minTickGap={24}
+                />
 
-              <YAxis
-                width={yAxisWidth}
-                tickMargin={10}
-                tickFormatter={axisValueFormatter}
-              />
+                <YAxis
+                  width={yAxisWidth}
+                  tickMargin={10}
+                  tickFormatter={axisValueFormatter}
+                />
 
-              <Tooltip
-                labelFormatter={formatTooltipTime}
-                formatter={(value) => axisValueFormatter(value)}
-              />
+                <Tooltip
+                  labelFormatter={formatTooltipTime}
+                  formatter={(value) => axisValueFormatter(value)}
+                />
 
-              <Bar
-                key={currentMetric}
-                dataKey={currentMetric}
-                name={getMetricLabel(currentMetric)}
-                fill={barColor}
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+                <Bar
+                  key={currentMetric}
+                  dataKey={currentMetric}
+                  name={getMetricLabel(currentMetric)}
+                  fill={barColor}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </>

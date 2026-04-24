@@ -48,7 +48,7 @@ const Sidebar = () => {
       {/* NAV LINKS */}
 
       {/* SETTINGS */}
-      <NavLink
+      {/* <NavLink
         to="/settings"
         className={({ isActive }) =>
           `mt-auto mb-4 flex w-full justify-center md:justify-start items-center md:space-x-5 py-2 md:px-5 rounded-md font-medium ${isActive ? "bg-slate-200 dark:bg-pitch dark:text-sky" : "hover:bg-slate-200 dark:text-gray-300 dark:hover:text-sky dark:hover:bg-pitch"}`
@@ -56,7 +56,7 @@ const Sidebar = () => {
       >
         <span className=""> {LuSettings()} </span>
         <span className="text-s hidden md:flex"> Settings </span>
-      </NavLink>
+      </NavLink> */}
     </div>
   );
 };

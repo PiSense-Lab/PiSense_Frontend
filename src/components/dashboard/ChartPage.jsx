@@ -17,6 +17,7 @@ const ChartPage = forwardRef(function ChartPage(
         if (!dataset) return;
 
         const res = await getTable(dataset, projectId);
+        console.log("Fetched data for chart:", res);
         setData(res);
       } catch (err) {
         console.error("API error:", err);

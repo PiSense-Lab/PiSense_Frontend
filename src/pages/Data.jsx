@@ -2,9 +2,7 @@ import React, { useState, useEffect } from "react";
 import Spreadsheet from "../components/Spreadsheet";
 import { RxTrash, RxDownload } from "react-icons/rx";
 import RoundButton from "../components/RoundButton";
-import DATA from "../data"; // import your data.js
-
-import { getTable, getTables } from "../api/timeseries";
+import { getTable, getTables, getDatasetsForProject } from "../api/timeseries";
 
 const Data = () => {
   const [selectedDataset, setSelectedDataset] = useState(null);
@@ -15,6 +13,22 @@ const Data = () => {
     const fetchDatasets = async () => {
       try {
         const projectid = JSON.parse(localStorage.getItem("projectid"));
+        if (projectid === "weather-1") {
+          const cachedRaw = localStorage.getItem("weatherDailyCache");
+          const cachedData = cachedRaw ? JSON.parse(cachedRaw) : null;
+          const datasets = Array.isArray(cachedData?.data) ? cachedData.data : [];
+
+          if (datasets.length > 0) {
+            setDatasetsMeta(datasets);
+            setLoading(false);
+            return;
+          }
+
+          const projectDatasets = await getDatasetsForProject(projectid);
+          setDatasetsMeta(projectDatasets);
+          setLoading(false);
+          return;
+        }
         const data = await getTables(projectid);
         if (data) {
           setDatasetsMeta(data);
@@ -33,8 +47,16 @@ const Data = () => {
 
 
   const handleViewDataset = async (dataset) => {
+    console.log("Viewing dataset:", dataset);
     if (dataset.mode === "edit") {
-      const result = await getTable(dataset.name);
+      if (dataset.data) {
+        setSelectedDataset({ ...dataset, mode: "edit" });
+        return;
+      }
+
+      const projectid = JSON.parse(localStorage.getItem("projectid"));
+      const result = await getTable(dataset, projectid);
+      console.log("Fetched dataset for viewing/editing:", result);
 
       if (!result) {
         console.error("Failed to load dataset");
@@ -46,6 +68,7 @@ const Data = () => {
       setSelectedDataset(dataset);
     }
   };
+  console.log("Selected dataset:", selectedDataset);
 
   return (
     <div className="p-4 flex flex-col gap-4">
@@ -101,8 +124,8 @@ const Data = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {datasetsMeta.map((ds) => {
-                // For now, set rowCount to 0 since we don't have it from API
-                const rowCount = ds.rows || 0;
+                const rowCount = ds.rows || (Array.isArray(ds.data) ? ds.data.length : 0);
+                const modifiedDate = ds.lastModified || ds.date || new Date().toISOString().split("T")[0];
 
                 return (
                   <tr
@@ -110,7 +133,7 @@ const Data = () => {
                     className="hover:bg-slate-100/50 dark:hover:bg-white/5 group"
                   >
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                      {ds.name}
+                      {ds.name || ds}
                     </td>
                     <td className="p-4">
                       <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">
@@ -121,14 +144,14 @@ const Data = () => {
                       {rowCount.toLocaleString()}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm">
-                      {ds.lastModified}
+                      {modifiedDate}
                     </td>
                     <td className="p-4">
                       <div className="flex justify-end items-center gap-4">
-                        <button
-                          onClick={() =>
-                            handleViewDataset({ name: ds.name, mode: "edit" })
-                          }
+                          <button
+                            onClick={() =>
+                              handleViewDataset({ ...ds, mode: "edit" })
+                            }
                           className="px-6 py-1.5 bg-sky text-white text-sm font-bold rounded-lg hover:bg-sky/90 shadow-sm shadow-sky/10"
                         >
                           View
@@ -158,8 +181,8 @@ const Data = () => {
           open={!!selectedDataset}
           onClose={() => setSelectedDataset(null)}
           mode={selectedDataset.mode || "create"} // default to create
-          existingDatasetName={selectedDataset.name} // used by the API in edit mode
-          initialData={selectedDataset.data ?? null}
+          existingDatasetName={selectedDataset} // used by the API in edit mode
+          initialData={Array.isArray(selectedDataset.data) ? selectedDataset.data : []}
         />
       )}
     </div>

@@ -182,7 +182,7 @@ export const submitManualData = async ({ datasetName, rows }) => {
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
   const isWeatherProject =
-    String(projectId) === "weather-1" || String(projectId) === "1";
+    String(projectId) === "weather-1";
 
   if (isWeatherProject) {
     const cache = getWeatherCache();

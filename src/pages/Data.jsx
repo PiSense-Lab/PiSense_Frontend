@@ -47,6 +47,7 @@ const Data = () => {
 
 
   const handleViewDataset = async (dataset) => {
+    console.log("Viewing dataset:", dataset);
     if (dataset.mode === "edit") {
       if (dataset.data) {
         setSelectedDataset({ ...dataset, mode: "edit" });

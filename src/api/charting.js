@@ -49,6 +49,7 @@ export function buildTimeSeries(json) {
     }, {}),
     data: normalized
     };
+
 }
 
 /**
@@ -118,6 +119,7 @@ function extractArray(json) {
 function detectTime(data) {
   const sample = data.slice(0, 20);
   const keys = Object.keys(sample[0]);
+  console.log("Sample", sample);
 
   // Composite case: date + time
   if (keys.includes("date") && keys.includes("time")) {
@@ -144,6 +146,7 @@ function detectTime(data) {
       if (typeof value === "string" && /^\d{1,2}:\d{2}(:\d{2})?$/.test(value)) {
         score += 3;
         detectedType = "time-only";
+        console.log("Detected time-only format in key:", detectedType, "Value:", value);
       }
 
       // Timestamp number (Unix timestamp in milliseconds: 1e9 to 1e13)
@@ -163,7 +166,7 @@ function detectTime(data) {
       bestType = detectedType;
     }
   }
-
+  console.log("Time Type", bestType, "Key:", bestKey, "Score:", bestScore);
   return bestKey ? { type: bestType, key: bestKey } : null;
 }
 
@@ -184,14 +187,32 @@ function buildTimestamp(row, config) {
   if (config.type === "composite") {
     return new Date(`${row.date}T${row.time}`).toISOString();
   }
-  
+  // for short tests
   if (config.type === "time-only") {
     // For time-only values, use today's date
-    const today = new Date().toISOString().split('T')[0];
-    return new Date(`${today}T${row[config.key]}`).toISOString();
+    // const today = new Date().toISOString().split('T')[0];
+    // return new Date(`${today}T${row[config.key]}`).toISOString();
+    console.log("Parsing time-only value:", parseTimeToSeconds(row[config.key]));
+    return parseTimeToSeconds(row[config.key]);
   }
   
   return new Date(row[config.key]).toISOString();
+}
+
+function parseTimeToSeconds(timeStr) {
+  const parts = timeStr.split(":").map(Number);
+
+  if (parts.length === 3) {
+    const [h, m, s] = parts;
+    return m * 60 + s;
+  }
+
+  if (parts.length === 2) {
+    const [m, s] = parts;
+    return m * 60 + s;
+  }
+
+  return null;
 }
 
 /**
@@ -232,6 +253,5 @@ function detectNumericFields(data, timeConfig) {
       }
     }
   }
-
   return Array.from(numeric);
 }

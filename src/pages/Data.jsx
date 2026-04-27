@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import Spreadsheet from "../components/Spreadsheet";
 import { RxTrash, RxDownload } from "react-icons/rx";
 import RoundButton from "../components/RoundButton";
-import DATA from "../data"; // import your data.js
-
 import { getTable, getTables } from "../api/timeseries";
 
 const Data = () => {

@@ -62,39 +62,39 @@ const buildWeatherDatasets = (
   historicalHourly,
   historicalDaily,
 ) => [
-  {
-    id: "weather_forecast_hourly",
-    name: "Hourly Weather Forecast",
-    description: "7-day hourly weather forecast based on your location.",
-    type: "forecast",
-    frequency: "hourly",
-    data: forecastHourly,
-  },
-  {
-    id: "weather_forecast_daily",
-    name: "Daily Weather Forecast",
-    description: "7-day daily weather forecast based on your location.",
-    type: "forecast",
-    frequency: "daily",
-    data: forecastDaily,
-  },
-  {
-    id: "weather_historical_hourly",
-    name: "Hourly Historical Weather",
-    description: "Hourly historical weather data for the past year.",
-    type: "historical",
-    frequency: "hourly",
-    data: historicalHourly,
-  },
-  {
-    id: "weather_historical_daily",
-    name: "Daily Historical Weather",
-    description: "Daily historical weather data for the past year.",
-    type: "historical",
-    frequency: "daily",
-    data: historicalDaily,
-  },
-];
+    {
+      id: "weather_forecast_hourly",
+      name: "Hourly Weather Forecast",
+      description: "7-day hourly weather forecast based on your location.",
+      type: "forecast",
+      frequency: "hourly",
+      data: forecastHourly,
+    },
+    {
+      id: "weather_forecast_daily",
+      name: "Daily Weather Forecast",
+      description: "7-day daily weather forecast based on your location.",
+      type: "forecast",
+      frequency: "daily",
+      data: forecastDaily,
+    },
+    {
+      id: "weather_historical_hourly",
+      name: "Hourly Historical Weather",
+      description: "Hourly historical weather data for the past year.",
+      type: "historical",
+      frequency: "hourly",
+      data: historicalHourly,
+    },
+    {
+      id: "weather_historical_daily",
+      name: "Daily Historical Weather",
+      description: "Daily historical weather data for the past year.",
+      type: "historical",
+      frequency: "daily",
+      data: historicalDaily,
+    },
+  ];
 
 // import { fetchWeatherData } from "./indexedbdhelper";
 
@@ -179,6 +179,10 @@ export const submitManualData = async ({ datasetName, rows }) => {
   }
 };
 
+export const bulkEditData = async (datasetId, changes, rows) => {
+
+}
+
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
   const isWeatherProject =
@@ -242,7 +246,7 @@ export const getProjects = async ({ userId = null, username = null, name = null 
     try {
       const params = new URLSearchParams();
       if (userId) params.append("user_id", userId);
-      
+
 
       const response = await fetch(`${BASE_URL}/users/get_user_projects?user_id=${userId}`);
       if (response.ok) {
@@ -250,8 +254,8 @@ export const getProjects = async ({ userId = null, username = null, name = null 
         const userProjects = Array.isArray(data)
           ? data
           : Array.isArray(data.projects)
-          ? data.projects
-          : [];
+            ? data.projects
+            : [];
 
         const filteredUserProjects = userProjects.filter(
           (project) =>
@@ -405,26 +409,26 @@ export const getDatasetsForProject = async (projectId) => {
 
   // Return datasets formatted for UI consumption
   return [
-      {
-        id: "weather_forecast_hourly",
-        name: "Hourly Weather Forecast",
-      },
-      {
-        id: "weather_forecast_daily",
-        name: "Daily Weather Forecast",
-        
-      },
-      {
-        id: "weather_historical_hourly",
-        name: "Hourly Historical Weather",
-      },
-      {
-        id: "weather_historical_daily",
-        name: "Daily Historical Weather",
-      },
-    ];
- 
+    {
+      id: "weather_forecast_hourly",
+      name: "Hourly Weather Forecast",
+    },
+    {
+      id: "weather_forecast_daily",
+      name: "Daily Weather Forecast",
+
+    },
+    {
+      id: "weather_historical_hourly",
+      name: "Hourly Historical Weather",
+    },
+    {
+      id: "weather_historical_daily",
+      name: "Daily Historical Weather",
+    },
+  ];
+
 };
-  
+
 
 

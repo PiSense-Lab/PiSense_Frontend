@@ -29,9 +29,19 @@ const Data = () => {
           setLoading(false);
           return;
         }
-        const data = await getTables(projectid);
+        const data = await getDatasetsForProject(projectid);
         if (data) {
-          setDatasetsMeta(data);
+          console.log("Fetched datasets metadata:", data);
+
+          const normalized = data.map((tableName) => ({
+            id: tableName,
+            name: tableName,
+            type: "table", // or infer if needed
+            rows: 0,
+            lastModified: null,
+          }));
+
+          setDatasetsMeta(normalized);
         }
       } catch (error) {
         console.error("Failed to fetch datasets:", error);
@@ -55,7 +65,8 @@ const Data = () => {
       }
 
       const projectid = JSON.parse(localStorage.getItem("projectid"));
-      const result = await getTable(dataset, projectid);
+      console.log("Fetching dataset for project ID:", projectid, "dataset:", dataset);
+      const result = await getTable(dataset.name, projectid);
       console.log("Fetched dataset for viewing/editing:", result);
 
       if (!result) {

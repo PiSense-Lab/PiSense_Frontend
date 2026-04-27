@@ -74,11 +74,19 @@ const Spreadsheet = ({
       id: `row-${i}`,
       cells: { "col-0": "" },
     }));
-    console.log("Initial dat", initialData.data)
+    console.log("Initial dat", initialData)
     // Prefer server data if provided
     if (mode === "edit" && initialData) {
       return transformDataToTable(initialData);
     }
+
+    // // Fallback to local DATA file
+    // if (mode === "edit" && existingDatasetId != null) {
+    //   const dataset = DATA.find((d) => d.id === existingDatasetId);
+    //   if (dataset?.rowsData) {
+    //     return transformDataToTable(dataset.rowsData);
+    //   }
+    // }
 
     return { columns: defaultColumns, rows: defaultRows };
   }

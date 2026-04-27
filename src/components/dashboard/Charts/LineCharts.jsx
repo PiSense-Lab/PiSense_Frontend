@@ -7,10 +7,11 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { MetricSelectPanel } from "./chart-support/MetricSelectPanel";
 import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import { getAdaptiveTimeFormatters } from "./chart-support/timeAxisFormatters";
 import usePersistentState from "../../../hooks/usePersistentState";
 
 export function GenerateLineChart({ jsonData, persistenceScope }) {
@@ -25,7 +26,10 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
     `${persistenceScope}:metric`,
     "",
   );
-  const metricKeys = result?.metricKeys || [];
+  const metricKeys = useMemo(
+    () => result?.metricKeys || [],
+    [result?.metricKeys],
+  );
   const currentMetric = metricKeys.includes(selectedMetric)
     ? selectedMetric
     : metricKeys[0] || "";
@@ -66,6 +70,9 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
     return Math.min(92, Math.max(50, maxChars * 8 + 10));
   })();
 
+  const { formatTick: formatXAxisTime, formatTooltip: formatTooltipTime } =
+    getAdaptiveTimeFormatters(result.data);
+
   return (
     <>
       <MetricSelectPanel
@@ -90,7 +97,8 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
 
           <XAxis
             dataKey="time"
-            tickFormatter={(t) => new Date(t).toLocaleDateString()}
+            tickFormatter={formatXAxisTime}
+            minTickGap={24}
           />
 
           <YAxis
@@ -100,7 +108,7 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
           />
 
           <Tooltip
-            labelFormatter={(label) => new Date(label).toLocaleDateString()}
+            labelFormatter={formatTooltipTime}
             formatter={(value) => axisValueFormatter(value)}
           />
 

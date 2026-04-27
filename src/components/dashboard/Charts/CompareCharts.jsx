@@ -8,17 +8,21 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { DualMetricSelectPanel } from "./chart-support/DualMetricSelectPanel";
 import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import { getAdaptiveTimeFormatters } from "./chart-support/timeAxisFormatters";
 import usePersistentState from "../../../hooks/usePersistentState";
 
 export function GenerateCompareChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
   console.log("Compare Chart data:", result);
 
-  const metricKeys = result?.metricKeys || [];
+  const metricKeys = useMemo(
+    () => result?.metricKeys || [],
+    [result?.metricKeys],
+  );
 
   const [leftMetric, setLeftMetric] = usePersistentState(
     `${persistenceScope}:leftMetric`,
@@ -35,6 +39,10 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
   const [rightColor, setRightColor] = usePersistentState(
     `${persistenceScope}:rightColor`,
     "#22c55e",
+  );
+  const [sameUnits, setSameUnits] = usePersistentState(
+    `${persistenceScope}:sameUnits`,
+    false,
   );
 
   useEffect(() => {
@@ -64,6 +72,9 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
     return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
   };
 
+  const { formatTick: formatXAxisTime, formatTooltip: formatTooltipTime } =
+    getAdaptiveTimeFormatters(result.data);
+
   return (
     <div>
       <DualMetricSelectPanel
@@ -86,19 +97,40 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
           value={rightColor}
           onChange={setRightColor}
         />
+        <label className="ml-0 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200 sm:ml-auto">
+          <input
+            type="checkbox"
+            checked={sameUnits}
+            onChange={(e) => setSameUnits(e.target.checked)}
+            className="h-4 w-4 cursor-pointer"
+          />
+          Same units (single axis)
+        </label>
       </div>
 
       {/* Dual Y-Axis Chart */}
       {leftMetric && rightMetric && leftMetric !== rightMetric && (
         <>
-          <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold">
-            <span className="min-w-0 truncate" style={{ color: leftColor }}>
-              Left Axis: {getMetricLabel(leftMetric)}
-            </span>
-            <span className="min-w-0 truncate" style={{ color: rightColor }}>
-              Right Axis: {getMetricLabel(rightMetric)}
-            </span>
-          </div>
+          {sameUnits ? (
+            <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold">
+              <span style={{ color: leftColor }}>
+                {getMetricLabel(leftMetric)}
+              </span>
+              <span style={{ color: rightColor }}>
+                {getMetricLabel(rightMetric)}
+              </span>
+              <span className="text-gray-500">(Single Y-axis)</span>
+            </div>
+          ) : (
+            <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold">
+              <span className="min-w-0 truncate" style={{ color: leftColor }}>
+                Left Axis: {getMetricLabel(leftMetric)}
+              </span>
+              <span className="min-w-0 truncate" style={{ color: rightColor }}>
+                Right Axis: {getMetricLabel(rightMetric)}
+              </span>
+            </div>
+          )}
 
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={result.data}>
@@ -106,28 +138,41 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
 
               <XAxis
                 dataKey="time"
-                tickFormatter={(t) => new Date(t).toLocaleDateString()}
+                tickFormatter={formatXAxisTime}
+                minTickGap={24}
               />
 
-              {/* Left Y-Axis */}
-              <YAxis
-                yAxisId="left"
-                width={60}
-                tickMargin={10}
-                tickFormatter={axisValueFormatter}
-              />
+              {sameUnits ? (
+                /* Single Y-Axis Mode */
+                <YAxis
+                  width={60}
+                  tickMargin={10}
+                  tickFormatter={axisValueFormatter}
+                />
+              ) : (
+                /* Dual Y-Axis Mode */
+                <>
+                  {/* Left Y-Axis */}
+                  <YAxis
+                    yAxisId="left"
+                    width={60}
+                    tickMargin={10}
+                    tickFormatter={axisValueFormatter}
+                  />
 
-              {/* Right Y-Axis */}
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                width={60}
-                tickMargin={10}
-                tickFormatter={axisValueFormatter}
-              />
+                  {/* Right Y-Axis */}
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    width={60}
+                    tickMargin={10}
+                    tickFormatter={axisValueFormatter}
+                  />
+                </>
+              )}
 
               <Tooltip
-                labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                labelFormatter={formatTooltipTime}
                 formatter={(value) => axisValueFormatter(value)}
               />
 
@@ -135,7 +180,7 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
 
               {/* Left Metric Line */}
               <Line
-                yAxisId="left"
+                yAxisId={sameUnits ? undefined : "left"}
                 type="monotone"
                 dataKey={leftMetric}
                 name={getMetricLabel(leftMetric)}
@@ -146,7 +191,7 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
 
               {/* Right Metric Line */}
               <Line
-                yAxisId="right"
+                yAxisId={sameUnits ? undefined : "right"}
                 type="monotone"
                 dataKey={rightMetric}
                 name={getMetricLabel(rightMetric)}

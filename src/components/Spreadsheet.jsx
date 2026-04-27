@@ -10,11 +10,30 @@ const DEFAULT_COL_WIDTH = 180;
 const ROW_NUM_WIDTH = 52;
 
 const transformDataToTable = (data) => {
-  if (!data || data.length === 0) {
+  console.log("Transforming data to table format:", data);
+  if (!data) {
     return { columns: [], rows: [] };
   }
 
-  const keys = Object.keys(data[0]);
+  // Handle object with nested arrays (e.g., { hourly: [...], daily: [...] })
+  // Prefer 'hourly' if available, otherwise first non-null key
+  let arrayData = data;
+  if (!Array.isArray(data)) {
+    const keys = Object.keys(data);
+    if (keys.length > 0) {
+      // Prefer hourly over daily, find first non-null value
+      arrayData = data.hourly || data.daily || keys.reduce((acc, key) => acc || data[key], null) || [];
+    } else {
+      arrayData = [];
+    }
+  }
+
+  if (!arrayData || arrayData.length === 0) {
+    return { columns: [], rows: [] };
+  }
+
+  const keys = Object.keys(arrayData[0]);
+  console.log("Extracted keys for columns:", keys);
 
   // Create columns
   const columns = keys.map((key, i) => ({
@@ -24,7 +43,7 @@ const transformDataToTable = (data) => {
   }));
 
   // Create rows
-  const rows = data.map((item, ri) => {
+  const rows = arrayData.map((item, ri) => {
     const cells = {};
     columns.forEach((col, ci) => {
       cells[col.id] = item[keys[ci]] ?? "";

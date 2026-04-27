@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
 import Spreadsheet from "../components/Spreadsheet";
 import { RxTrash, RxDownload } from "react-icons/rx";
 import RoundButton from "../components/RoundButton";
-import { getTable, getTables, getDatasetsForProject } from "../api/timeseries";
+import { getTable, getDatasetsForProject } from "../api/timeseries";
 
 const Data = () => {
+  const { activeProject } = useOutletContext();
   const [selectedDataset, setSelectedDataset] = useState(null);
   const [datasetsMeta, setDatasetsMeta] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch datasets when project changes
   useEffect(() => {
     const fetchDatasets = async () => {
+      if (!activeProject) return;
+      
+      setLoading(true);
       try {
-        const projectid = JSON.parse(localStorage.getItem("projectid"));
+        const projectid = activeProject.id;
+        localStorage.setItem("projectid", JSON.stringify(projectid));
         if (projectid === "weather-1") {
           const cachedRaw = localStorage.getItem("weatherDailyCache");
           const cachedData = cachedRaw ? JSON.parse(cachedRaw) : null;
@@ -51,7 +58,7 @@ const Data = () => {
     };
 
     fetchDatasets();
-  }, []);
+  }, [activeProject]);
 
   // get data from the backend api from projectid and put the basic table data in the datasetsmeta
 
@@ -64,7 +71,7 @@ const Data = () => {
         return;
       }
 
-      const projectid = JSON.parse(localStorage.getItem("projectid"));
+      const projectid = activeProject?.id;
       console.log("Fetching dataset for project ID:", projectid, "dataset:", dataset);
       const result = await getTable(dataset.name, projectid);
       console.log("Fetched dataset for viewing/editing:", result);
@@ -188,9 +195,9 @@ const Data = () => {
         <Spreadsheet
           open={!!selectedDataset}
           onClose={() => setSelectedDataset(null)}
-          mode={selectedDataset.mode || "create"} // default to create
-          existingDatasetName={selectedDataset} // used by the API in edit mode
-          initialData={Array.isArray(selectedDataset.data) ? selectedDataset.data : []}
+          mode={selectedDataset.mode || "create"}
+          existingDatasetId={selectedDataset.id}
+          initialData={selectedDataset.data}
         />
       )}
     </div>

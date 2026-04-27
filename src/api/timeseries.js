@@ -427,13 +427,35 @@ export const getDatasetsForProject = async (projectId) => {
     }
 
   }
+  // get data from weather cache (or fetch if not present/expired) and return in expected format
+  const weatherData = await ensureDailyWeatherCache();
 
   // Return datasets formatted for UI consumption
   return [
-    "Hourly Weather Forecast",
-    "Daily Weather Forecast",
-    "Hourly Historical Weather",
-    "Daily Historical Weather",
+    {
+      "table_name": "Hourly Weather Forecast",
+      "last_updated": weatherData.date || new Date().toISOString().split("T")[0],
+      "row_count": weatherData.data.find(d => d.id === "weather_forecast_hourly")?.data.length || 0,
+      "column_count": weatherData.data.find(d => d.id === "weather_forecast_hourly")?.data[0] ? Object.keys(weatherData.data.find(d => d.id === "weather_forecast_hourly").data[0]) : []
+    },
+    {
+      "table_name": "Daily Weather Forecast",
+      "last_updated": weatherData.date || new Date().toISOString().split("T")[0],
+      "row_count": weatherData.data.find(d => d.id === "weather_forecast_daily")?.data.length || 0,
+      "column_count": weatherData.data.find(d => d.id === "weather_forecast_daily")?.data[0] ? Object.keys(weatherData.data.find(d => d.id === "weather_forecast_daily").data[0]) : []
+    },
+    {
+      "table_name": "Hourly Historical Weather",
+      "last_updated": weatherData.date || new Date().toISOString().split("T")[0],
+      "row_count": weatherData.data.find(d => d.id === "weather_historical_hourly")?.data.length || 0,
+      "column_count": weatherData.data.find(d => d.id === "weather_historical_hourly")?.data[0] ? Object.keys(weatherData.data.find(d => d.id === "weather_historical_hourly").data[0]) : []
+    },
+    {
+      "table_name": "Daily Historical Weather",
+      "last_updated": weatherData.date || new Date().toISOString().split("T")[0],
+      "row_count": weatherData.data.find(d => d.id === "weather_historical_daily")?.data.length || 0,
+      "column_count": weatherData.data.find(d => d.id === "weather_historical_daily")?.data[0] ? Object.keys(weatherData.data.find(d => d.id === "weather_historical_daily").data[0]) : []
+    }
   ];
 
 };

@@ -1,25 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { RxCross2 } from "react-icons/rx";
 
-const DATASET_TYPES = [
-  { value: "weather", label: "Weather", icon: "🌤️" },
-  { value: "sensor", label: "Sensor", icon: "📡" },
-  { value: "financial", label: "Financial", icon: "💹" },
-  { value: "health", label: "Health", icon: "🩺" },
-  { value: "environment", label: "Environment", icon: "🌿" },
-  { value: "energy", label: "Energy", icon: "⚡" },
-  { value: "transport", label: "Transport", icon: "🚗" },
-  { value: "custom", label: "Custom", icon: "🗂️" },
-];
 
 const SubmitModal = ({ columns, rows, onConfirm, onBack }) => {
   const [datasetName, setDatasetName] = useState("");
-  const [datasetType, setDatasetType] = useState("");
-  const [customLabel, setCustomLabel] = useState("");
   const [nameError, setNameError] = useState(false);
-  const [typeError, setTypeError] = useState(false);
-
-  const customInputRef = useRef(null);
 
   const handleConfirm = () => {
     let hasError = false;
@@ -29,19 +14,12 @@ const SubmitModal = ({ columns, rows, onConfirm, onBack }) => {
       hasError = true;
     }
 
-    if (!datasetType) {
-      setTypeError(true);
-      hasError = true;
-    }
-
     if (hasError) return;
 
-    const resolvedType =
-      datasetType === "custom" ? customLabel.trim() || "Custom" : datasetType;
+
 
     onConfirm({
       datasetName: datasetName.trim(),
-      datasetType: resolvedType,
     });
   };
 
@@ -93,86 +71,17 @@ const SubmitModal = ({ columns, rows, onConfirm, onBack }) => {
               className={`w-full rounded-lg px-4 py-2.5 text-sm outline-none transition
                 bg-slate-100 dark:bg-pitch
                 border
-                ${
-                  nameError
-                    ? "border-red-500 ring-2 ring-red-500/20"
-                    : datasetName
-                      ? "border-sky ring-2 ring-sky/20"
-                      : "border-slate-200 dark:border-midnight"
+                ${nameError
+                  ? "border-red-500 ring-2 ring-red-500/20"
+                  : datasetName
+                    ? "border-sky ring-2 ring-sky/20"
+                    : "border-slate-200 dark:border-midnight"
                 }`}
             />
 
             {nameError && (
               <p className="text-xs mt-1 text-red-500">
                 Please enter a name for this dataset.
-              </p>
-            )}
-          </div>
-
-          {/* Dataset Type */}
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              Dataset Type <span className="text-red-500">*</span>
-              <span className="ml-2 text-xs font-normal text-slate-400">
-                What kind of data is this?
-              </span>
-            </label>
-
-            <div className="grid grid-cols-4 gap-2">
-              {DATASET_TYPES.map((dt) => {
-                const active = datasetType === dt.value;
-                const isCustom = dt.value === "custom";
-
-                return (
-                  <button
-                    key={dt.value}
-                    onClick={() => {
-                      setDatasetType(dt.value);
-                      setTypeError(false);
-
-                      if (isCustom) {
-                        setTimeout(() => customInputRef.current?.focus(), 50);
-                      }
-                    }}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-xs font-medium transition
-                      border
-                      ${
-                        active
-                          ? "border-sky bg-sky/10 text-sky ring-2 ring-sky/20"
-                          : typeError
-                            ? "border-red-400/40"
-                            : "border-slate-200 dark:border-midnight"
-                      }
-                      bg-slate-50 dark:bg-pitch
-                      text-slate-400
-                    `}
-                  >
-                    <span className="text-[22px]">{dt.icon}</span>
-
-                    {isCustom && active ? (
-                      <input
-                        ref={customInputRef}
-                        value={customLabel}
-                        onChange={(e) => setCustomLabel(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                          e.stopPropagation();
-                          if (e.key === "Enter") handleConfirm();
-                        }}
-                        placeholder="Type name…"
-                        className="w-full text-center bg-transparent outline-none text-xs mt-0.5 border-b border-sky text-sky caret-sky"
-                      />
-                    ) : (
-                      dt.label
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {typeError && (
-              <p className="text-xs mt-1.5 text-red-500">
-                Please select a dataset type.
               </p>
             )}
           </div>

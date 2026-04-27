@@ -157,6 +157,7 @@ export const submitManualData = async ({ datasetName, rows }) => {
     const params = new URLSearchParams({
       table_name: datasetName,
       json_in: JSON.stringify(rows),
+      project_id: 1,
     });
 
     const response = await fetch(

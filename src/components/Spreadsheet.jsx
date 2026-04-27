@@ -227,7 +227,7 @@ const Spreadsheet = ({
   // ─────────────────────────────────────────────
   // Save/submit
   // ─────────────────────────────────────────────
-  const handleConfirm = async ({ datasetName, datasetType }) => {
+  const handleConfirm = async ({ datasetName }) => {
     setShowConfirm(false);
     setStatus(mode === "create" ? "Submitting…" : "Saving…");
 
@@ -246,7 +246,6 @@ const Spreadsheet = ({
     if (mode === "create") {
       const result = await submitManualData({
         datasetName,
-        datasetType,
         rows: cleanData,
       });
 

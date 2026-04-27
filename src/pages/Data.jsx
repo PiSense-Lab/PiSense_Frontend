@@ -29,20 +29,20 @@ const Data = () => {
           setLoading(false);
           return;
         }
-        const data = await getDatasetsForProject(projectid);
-        if (data) {
-          console.log("Fetched datasets metadata:", data);
 
-          const normalized = data.map((tableName) => ({
-            id: tableName,
-            name: tableName,
-            type: "table", // or infer if needed
-            rows: 0,
-            lastModified: null,
-          }));
+        const tableNames = await getDatasetsForProject(projectid);
+        console.log(tableNames)
+        if (!tableNames) return;
 
-          setDatasetsMeta(normalized);
-        }
+        const normalized = tableNames.map((table) => ({
+          id: table.table_name,
+          name: table.table_name,
+          rows: table.row_count,
+          columns: 0, // not provided by this endpoint
+          lastModified: table.last_updated,
+        }));
+
+        setDatasetsMeta(normalized);
       } catch (error) {
         console.error("Failed to fetch datasets:", error);
       } finally {
@@ -119,11 +119,11 @@ const Data = () => {
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider">
                   Dataset Name
                 </th>
-                <th className="p-4 font-semibold text-xs uppercase tracking-wider">
-                  Type
-                </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider text-center">
                   Rows
+                </th>
+                <th className="p-4 font-semibold text-xs uppercase tracking-wider text-center">
+                  Columns
                 </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider">
                   Modified Date
@@ -135,7 +135,6 @@ const Data = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {datasetsMeta.map((ds) => {
-                const rowCount = ds.rows || (Array.isArray(ds.data) ? ds.data.length : 0);
                 const modifiedDate = ds.lastModified || ds.date || new Date().toISOString().split("T")[0];
 
                 return (
@@ -146,13 +145,11 @@ const Data = () => {
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
                       {ds.name || ds}
                     </td>
-                    <td className="p-4">
-                      <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">
-                        {ds.type}
-                      </span>
+                    <td className="p-4 text-slate-500 dark:text-slate-400 text-sm text-center font-mono">
+                      {(ds.rows ?? 0).toLocaleString()}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm text-center font-mono">
-                      {rowCount.toLocaleString()}
+                      {(ds.columns ?? 0).toLocaleString()}   {/* was using rowCount for both */}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm">
                       {modifiedDate}

@@ -39,7 +39,7 @@ const QuickActions = ({
             const storageKey = getDatasetStorageKey(selectedProject.id);
             const savedDatasetName = localStorage.getItem(storageKey);
             const matchedDataset = ds.find(
-              (dataset) => dataset === savedDatasetName,
+              (dataset) => dataset.table_name === savedDatasetName,
             );
             const initialDatasetName = matchedDataset ?? ds[0];
 

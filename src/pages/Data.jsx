@@ -40,15 +40,7 @@ const Data = () => {
         if (data) {
           console.log("Fetched datasets metadata:", data);
 
-          const normalized = data.map((tableName) => ({
-            id: tableName,
-            name: tableName,
-            type: "table", // or infer if needed
-            rows: 0,
-            lastModified: null,
-          }));
-
-          setDatasetsMeta(normalized);
+          setDatasetsMeta(data);
         }
       } catch (error) {
         console.error("Failed to fetch datasets:", error);
@@ -73,7 +65,7 @@ const Data = () => {
 
       const projectid = activeProject?.id;
       console.log("Fetching dataset for project ID:", projectid, "dataset:", dataset);
-      const result = await getTable(dataset.name, projectid);
+      const result = await getTable(dataset.table_name, projectid);
       console.log("Fetched dataset for viewing/editing:", result);
 
       if (!result) {
@@ -142,7 +134,7 @@ const Data = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {datasetsMeta.map((ds) => {
-                const rowCount = ds.rows || (Array.isArray(ds.data) ? ds.data.length : 0);
+                const rowCount = ds.row_count || (Array.isArray(ds.data) ? ds.data.length : 0);
                 const modifiedDate = ds.lastModified || ds.date || new Date().toISOString().split("T")[0];
 
                 return (
@@ -151,7 +143,7 @@ const Data = () => {
                     className="hover:bg-slate-100/50 dark:hover:bg-white/5 group"
                   >
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                      {ds.name || ds}
+                      {ds.table_name || ds}
                     </td>
                     <td className="p-4">
                       <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">
@@ -159,7 +151,7 @@ const Data = () => {
                       </span>
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm text-center font-mono">
-                      {rowCount.toLocaleString()}
+                      {ds.row_count}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm">
                       {modifiedDate}

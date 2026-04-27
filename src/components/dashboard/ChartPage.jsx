@@ -8,7 +8,6 @@ const ChartPage = forwardRef(function ChartPage(
   { dataset, projectId, chartType = "line", persistenceScope },
   ref,
 ) {
-  console.log("ChartPage props:", { dataset, projectId, chartType, persistenceScope });
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +17,6 @@ const ChartPage = forwardRef(function ChartPage(
         if (!dataset) return;
 
         const res = await getTable(dataset.table_name, projectId);
-        console.log("Fetched data for chart:", res);
         setData(res);
       } catch (err) {
         console.error("API error:", err);

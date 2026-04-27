@@ -119,7 +119,6 @@ function extractArray(json) {
 function detectTime(data) {
   const sample = data.slice(0, 20);
   const keys = Object.keys(sample[0]);
-  console.log("Sample", sample);
 
   // Composite case: date + time
   if (keys.includes("date") && keys.includes("time")) {
@@ -166,7 +165,6 @@ function detectTime(data) {
       bestType = detectedType;
     }
   }
-  console.log("Time Type", bestType, "Key:", bestKey, "Score:", bestScore);
   return bestKey ? { type: bestType, key: bestKey } : null;
 }
 

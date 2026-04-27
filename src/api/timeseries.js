@@ -186,7 +186,7 @@ export const bulkEditData = async (datasetId, changes, rows) => {
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
   const isWeatherProject =
-    String(projectId) === "weather-1" || String(projectId) === "1";
+    String(projectId) === "weather-1";
 
   if (isWeatherProject) {
     const cache = getWeatherCache();
@@ -199,12 +199,31 @@ export const getTable = async (tableName, projectId) => {
   }
 
   try {
-    const response = await fetch(`${BASE_URL}/datatables/${tableName}`);
+    const response = await fetch(
+      `${BASE_URL}/datatables/${encodeURIComponent(tableName)}?project_id=${projectId}`,
+    );
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
     const json = await response.json();
-    return json.data;
+
+    const extractTableData = (payload) => {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== "object") return null;
+      if (Array.isArray(payload[tableName])) return payload[tableName];
+      if (Array.isArray(payload.data)) return payload.data;
+      if (payload.data && typeof payload.data === "object") {
+        if (Array.isArray(payload.data[tableName])) return payload.data[tableName];
+      }
+
+      for (const value of Object.values(payload)) {
+        if (Array.isArray(value)) return value;
+      }
+
+      return null;
+    };
+
+    return extractTableData(json);
   } catch (error) {
     console.error("Error fetching table:", error);
     return null;
@@ -218,7 +237,7 @@ export const getTables = async (projectId = 1) => {
       throw new Error(`Server responded with status ${response.status}`);
     }
     const json = await response.json();
-    return json.data;
+    return json;
   } catch (error) {
     console.error("Error fetching table:", error);
     return null;
@@ -228,10 +247,10 @@ export const getTables = async (projectId = 1) => {
 
 // src/api/projects.js
 
-export const getProjects = async ({ userId = null, username = null, name = null } = {}) => {
+export const getProjects = async ({ userId = null, name = null } = {}) => {
   const weatherProject = {
-    project_id: "weather-1",
-    project_name: "Weather",
+    id: "weather-1",
+    name: "Weather",
     last_update: new Date().toISOString().split("T")[0],
     total_datasets: 4,
     anomalies: 0,
@@ -251,6 +270,7 @@ export const getProjects = async ({ userId = null, username = null, name = null 
       const response = await fetch(`${BASE_URL}/users/get_user_projects?user_id=${userId}`);
       if (response.ok) {
         const data = await response.json();
+        projects.push(...data.data);
         const userProjects = Array.isArray(data)
           ? data
           : Array.isArray(data.projects)
@@ -259,8 +279,8 @@ export const getProjects = async ({ userId = null, username = null, name = null 
 
         const filteredUserProjects = userProjects.filter(
           (project) =>
-            project.project_name !== weatherProject.project_name &&
-            String(project.project_id) !== String(weatherProject.project_id),
+            project.name !== weatherProject.name &&
+            String(project.id) !== String(weatherProject.id),
         );
 
         projects.push(...filteredUserProjects);
@@ -273,12 +293,6 @@ export const getProjects = async ({ userId = null, username = null, name = null 
     } catch (error) {
       console.error("Error fetching user-specific projects:", error);
     }
-  }
-
-  if (name) {
-    return projects.filter((p) =>
-      p.project_name.toLowerCase().includes(name.toLowerCase()),
-    );
   }
 
   return projects;
@@ -390,16 +404,18 @@ export const getDatasetsForProject = async (projectId) => {
   const isWeatherProject =
     String(projectId) === "weather-1";
 
+
   if (!isWeatherProject) {
     // For non-weather projects, fetch datasets from backend = http://192.168.1.90:8000/datatables/?project_id=3
     try {
-      const params = new URLSearchParams({ project_id: projectId });
-      const response = await fetch(`${BASE_URL}/datatables?${params}`);
+      // const params = new URLSearchParams({ project_id: projectId });
+      const response = await fetch(`${BASE_URL}/datatables?project_id=${projectId}`);
       if (!response.ok) {
         throw new Error(`Server responded with status ${response.status}`);
       }
       const json = await response.json();
-      return Array.isArray(json.data) ? json.data : [];
+
+      return Array.isArray(json) ? json : [];
     } catch (error) {
       console.error("Error fetching datasets for project:", error);
       return [];
@@ -409,23 +425,10 @@ export const getDatasetsForProject = async (projectId) => {
 
   // Return datasets formatted for UI consumption
   return [
-    {
-      id: "weather_forecast_hourly",
-      name: "Hourly Weather Forecast",
-    },
-    {
-      id: "weather_forecast_daily",
-      name: "Daily Weather Forecast",
-
-    },
-    {
-      id: "weather_historical_hourly",
-      name: "Hourly Historical Weather",
-    },
-    {
-      id: "weather_historical_daily",
-      name: "Daily Historical Weather",
-    },
+    "Hourly Weather Forecast",
+    "Daily Weather Forecast",
+    "Hourly Historical Weather",
+    "Daily Historical Weather",
   ];
 
 };

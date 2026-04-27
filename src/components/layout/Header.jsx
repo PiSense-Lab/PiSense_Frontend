@@ -27,14 +27,14 @@ const Header = ({ onProjectChange }) => {
         if (allProjects.length > 0) {
           const savedProjectId = localStorage.getItem("selectedProjectId");
           const matchedProject = allProjects.find(
-            (project) => String(project.project_id) === String(savedProjectId),
+            (project) => String(project.id) === String(savedProjectId),
           );
           const initialProject = matchedProject ?? allProjects[0];
 
           setSelectedProject(initialProject);
           onProjectChange?.(initialProject);
-          localStorage.setItem("projectid", JSON.stringify(initialProject.project_id));
-          localStorage.setItem("selectedProjectId", String(initialProject.project_id));
+          localStorage.setItem("projectid", JSON.stringify(initialProject.id));
+          localStorage.setItem("selectedProjectId", String(initialProject.id));
         }
       } catch (err) {
         console.error("Error fetching projects:", err);
@@ -42,17 +42,17 @@ const Header = ({ onProjectChange }) => {
     };
 
     fetchProjects();
-  }, []);
+  }, [onProjectChange]);
 
   const handleProjectChange = (e) => {
     const projectId = e.target.value;
-    const project = projects.find((p) => String(p.project_id) === projectId);
+    const project = projects.find((p) => String(p.id) === projectId);
     if (!project) return;
 
     setSelectedProject(project);
     onProjectChange?.(project);
-    localStorage.setItem("projectid", JSON.stringify(project.project_id));
-    localStorage.setItem("selectedProjectId", String(project.project_id));
+    localStorage.setItem("projectid", JSON.stringify(project.id));
+    localStorage.setItem("selectedProjectId", String(project.id));
   };
 
   const handleLogout = () => {
@@ -79,7 +79,7 @@ const Header = ({ onProjectChange }) => {
           Active Project:
         </label>
         <select
-          value={selectedProject?.project_id ?? ""}
+          value={selectedProject?.id ?? ""}
           onChange={handleProjectChange}
           disabled={projects.length === 0}
           className="min-w-55 rounded-md bg-slate-200 px-3 py-2 text-base font-medium focus:outline-none focus:ring-1 focus:ring-sky dark:border-slate-700 dark:bg-pitch disabled:opacity-50"
@@ -88,8 +88,8 @@ const Header = ({ onProjectChange }) => {
             <option value="">Loading projects...</option>
           )}
           {projects.map((project) => (
-            <option key={project.project_id} value={String(project.project_id)}>
-              {project.project_name}
+            <option key={project.id} value={String(project.id)}>
+              {project.name}
             </option>
           ))}
         </select>

@@ -195,8 +195,12 @@ export const getTable = async (tableName, projectId) => {
   }
 
   try {
+    const params = new URLSearchParams({
+      table_name: tableName,
+      project_id: projectId,
+    });
     const response = await fetch(
-      `${BASE_URL}/datatables/${encodeURIComponent(tableName)}?project_id=${projectId}`,
+      `${BASE_URL}/datatables/get_table?${params}`,
     );
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
@@ -396,7 +400,7 @@ export const ensureDailyWeatherCache = async () => {
  * Fetch datasets associated with a project.
  */
 export const getDatasetsForProject = async (projectId) => {
-  // Only handle the Weather project (ID: "weather-1" or "1")
+  // Only handle the Weather project (ID: "weather-1")
   const isWeatherProject =
     String(projectId) === "weather-1";
 

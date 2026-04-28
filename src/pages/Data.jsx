@@ -38,7 +38,6 @@ const Data = () => {
         }
         const data = await getDatasetsForProject(projectid);
         if (data) {
-          console.log("Fetched datasets metadata:", data);
 
           setDatasetsMeta(data);
         }
@@ -56,7 +55,6 @@ const Data = () => {
 
 
   const handleViewDataset = async (dataset) => {
-    console.log("Viewing dataset:", dataset);
     if (dataset.mode === "edit") {
       if (dataset.data) {
         setSelectedDataset({ ...dataset, mode: "edit" });
@@ -64,9 +62,7 @@ const Data = () => {
       }
 
       const projectid = activeProject?.id;
-      console.log("Fetching dataset for project ID:", projectid, "dataset:", dataset);
       const result = await getTable(dataset.table_name, projectid);
-      console.log("Fetched dataset for viewing/editing:", result);
 
       if (!result) {
         console.error("Failed to load dataset");
@@ -78,7 +74,6 @@ const Data = () => {
       setSelectedDataset(dataset);
     }
   };
-  console.log("Selected dataset:", selectedDataset);
 
   return (
     <div className="p-4 flex flex-col gap-4">
@@ -139,11 +134,11 @@ const Data = () => {
 
                 return (
                   <tr
-                    key={ds.id}
+                    key={ds.id ?? ds.table_name ?? ds}
                     className="hover:bg-slate-100/50 dark:hover:bg-white/5 group"
                   >
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                      {ds.table_name || ds}
+                      {ds.table_name || ds.name || "Untitled Dataset"}
                     </td>
                     <td className="p-4">
                       <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">
@@ -188,7 +183,7 @@ const Data = () => {
       {/* Spreadsheet Modal */}
       {selectedDataset && (
         <Spreadsheet
-          open={!!selectedDataset}
+          open={!!selectedDataset.table_name}
           onClose={() => setSelectedDataset(null)}
           mode={selectedDataset.mode || "create"}
           existingDatasetId={selectedDataset.id}

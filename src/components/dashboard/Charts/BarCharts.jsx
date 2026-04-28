@@ -18,7 +18,6 @@ const POINT_WIDTH = 12;
 
 export function GenerateBarChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
-  console.log("Bar Chart data:", result);
   const [barColor, setBarColor] = usePersistentState(
     `${persistenceScope}:color`,
     "#22c55e",

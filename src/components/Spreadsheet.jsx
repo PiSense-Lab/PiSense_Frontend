@@ -10,7 +10,6 @@ const DEFAULT_COL_WIDTH = 180;
 const ROW_NUM_WIDTH = 52;
 
 const transformDataToTable = (data) => {
-  console.log("Transforming data to table format:", data);
   if (!data) {
     return { columns: [], rows: [] };
   }
@@ -33,7 +32,6 @@ const transformDataToTable = (data) => {
   }
 
   const keys = Object.keys(arrayData[0]);
-  console.log("Extracted keys for columns:", keys);
 
   // Create columns
   const columns = keys.map((key, i) => ({
@@ -83,7 +81,6 @@ const Spreadsheet = ({
       id: `row-${i}`,
       cells: { "col-0": "" },
     }));
-    console.log("Initial dat", initialData)
     // Prefer server data if provided
     if (mode === "edit" && initialData) {
       return transformDataToTable(initialData);

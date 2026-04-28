@@ -138,7 +138,7 @@ const Data = () => {
                     className="hover:bg-slate-100/50 dark:hover:bg-white/5 group"
                   >
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                      {ds.table_name || ds}
+                      {ds.table_name || ds.name || "Untitled Dataset"}
                     </td>
                     <td className="p-4">
                       <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">

@@ -64,34 +64,34 @@ const buildWeatherDatasets = (
 ) => [
   {
     id: "weather_forecast_hourly",
-    name: "Hourly Weather Forecast",
+    table_name: "Hourly Weather Forecast",
     description: "7-day hourly weather forecast based on your location.",
-    type: "forecast",
-    frequency: "hourly",
+    row_count: forecastHourly.length,
+    column_count: forecastHourly[0] ? Object.keys(forecastHourly[0]).length : 0,
     data: forecastHourly,
   },
   {
     id: "weather_forecast_daily",
-    name: "Daily Weather Forecast",
+    table_name: "Daily Weather Forecast",
     description: "7-day daily weather forecast based on your location.",
-    type: "forecast",
-    frequency: "daily",
+    row_count: forecastDaily.length,
+    column_count: forecastDaily[0] ? Object.keys(forecastDaily[0]).length : 0,
     data: forecastDaily,
   },
   {
     id: "weather_historical_hourly",
-    name: "Hourly Historical Weather",
+    table_name: "Hourly Historical Weather",
     description: "Hourly historical weather data for the past year.",
-    type: "historical",
-    frequency: "hourly",
+    row_count: historicalHourly.length,
+    column_count: historicalHourly[0] ? Object.keys(historicalHourly[0]).length : 0,
     data: historicalHourly,
   },
   {
     id: "weather_historical_daily",
-    name: "Daily Historical Weather",
+    table_name: "Daily Historical Weather",
     description: "Daily historical weather data for the past year.",
-    type: "historical",
-    frequency: "daily",
+    row_count: historicalDaily.length,
+    column_count: historicalDaily[0] ? Object.keys(historicalDaily[0]).length : 0,
     data: historicalDaily,
   },
 ];
@@ -187,11 +187,11 @@ export const getTable = async (tableName, projectId) => {
   if (isWeatherProject) {
     const cache = getWeatherCache();
     if (cache && isSameCacheDay(cache.date) && Array.isArray(cache.data)) {
-      return cache.data.find((d) => d.name === tableName)?.data || null;
+      return cache.data.find((d) => d.table_name === tableName)?.data || null;
     }
 
     const weatherData = await ensureDailyWeatherCache();
-    return weatherData.find((d) => d.name === tableName)?.data || null;
+    return weatherData.find((d) => d.table_name === tableName)?.data || null;
   }
 
   try {
@@ -430,27 +430,27 @@ export const getDatasetsForProject = async (projectId) => {
   return [  
           {
           "table_name": "Hourly Weather Forecast",
-          "last_updated": weatherData.date || new Date().toISOString().split("T")[0],
-          "row_count":1, // weatherData.data.find(d => d.id === "weather_forecast_hourly")?.data.length || 0,
-          "column_count":1, // weatherData.data.find(d => d.id === "weather_forecast_hourly")?.data[0] ? Object.keys(weatherData.data.find(d => d.id === "weather_forecast_hourly").data[0]) : []
+          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+          "row_count": weatherData.find(d => d.id === "weather_forecast_hourly")?.data?.length || 0,
+          "column_count": weatherData.find(d => d.id === "weather_forecast_hourly")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_forecast_hourly").data[0]) : []
         },   
         {
           "table_name": "Daily Weather Forecast",
-          "last_updated": weatherData.date || new Date().toISOString().split("T")[0],
-          "row_count": 1, //weatherData.data.find(d => d.id === "weather_forecast_daily")?.data.length || 0,
-          "column_count": 1, // weatherData.data.find(d => d.id === "weather_forecast_daily")?.data[0] ? Object.keys(weatherData.data.find(d => d.id === "weather_forecast_daily").data[0]) : []
+          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+          "row_count": weatherData.find(d => d.id === "weather_forecast_daily")?.data?.length || 0,
+          "column_count": weatherData.find(d => d.id === "weather_forecast_daily")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_forecast_daily").data[0]) : []
         },  
         {
           "table_name": "Hourly Historical Weather",
-          "last_updated": weatherData.date || new Date().toISOString().split("T")[0],
-          "row_count": 1, //weatherData.data.find(d => d.id === "weather_historical_hourly")?.data.length || 0,
-          "column_count": 1,// weatherData.data.find(d => d.id === "weather_historical_hourly")?.data[0] ? Object.keys(weatherData.data.find(d => d.id === "weather_historical_hourly").data[0]) : []
+          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+          "row_count": weatherData.find(d => d.id === "weather_historical_hourly")?.data?.length || 0,
+          "column_count": weatherData.find(d => d.id === "weather_historical_hourly")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_historical_hourly").data[0]) : []
         },  
         {
           "table_name": "Daily Historical Weather",
-          "last_updated": weatherData.date || new Date().toISOString().split("T")[0],
-          "row_count": 1,//weatherData.data.find(d => d.id === "weather_historical_daily")?.data.length || 0,
-          "column_count": 1, //weatherData.data.find(d => d.id === "weather_historical_daily")?.data[0] ? Object.keys(weatherData.data.find(d => d.id === "weather_historical_daily").data[0]) : []
+          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+          "row_count": weatherData.find(d => d.id === "weather_historical_daily")?.data?.length || 0,
+          "column_count": weatherData.find(d => d.id === "weather_historical_daily")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_historical_daily").data[0]) : []
         }
     ];
  

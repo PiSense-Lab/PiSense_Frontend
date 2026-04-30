@@ -93,6 +93,7 @@ const Data = () => {
             handleViewDataset({
               mode: "create",
               id: null,
+              table_name: "", // Empty table_name ensures Spreadsheet opens in create mode
             })
           }
           className="bg-sky text-white w-25 h-10"
@@ -184,7 +185,7 @@ const Data = () => {
       {/* Spreadsheet Modal */}
       {selectedDataset && (
         <Spreadsheet
-          open={!!selectedDataset.table_name}
+          open={!!selectedDataset.table_name || selectedDataset.mode === "create"}
           onClose={() => setSelectedDataset(null)}
           mode={selectedDataset.mode || "create"}
           existingDatasetId={selectedDataset.id}

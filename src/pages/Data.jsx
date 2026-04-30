@@ -57,7 +57,7 @@ const Data = () => {
   const handleViewDataset = async (dataset) => {
     if (dataset.mode === "edit") {
       if (dataset.data) {
-        setSelectedDataset({ ...dataset, mode: "edit" });
+        setSelectedDataset({ ...dataset, data: dataset.data });
         return;
       }
 
@@ -68,9 +68,10 @@ const Data = () => {
         console.error("Failed to load dataset");
         return;
       }
-
+      console.log("Fetched dataset data:", result);
       setSelectedDataset({ ...dataset, data: result });
     } else {
+      console.log("Creating new dataset");
       setSelectedDataset(dataset);
     }
   };
@@ -92,6 +93,7 @@ const Data = () => {
             handleViewDataset({
               mode: "create",
               id: null,
+              table_name: "", // Empty table_name ensures Spreadsheet opens in create mode
             })
           }
           className="bg-sky text-white w-25 h-10"
@@ -114,10 +116,10 @@ const Data = () => {
                   Dataset Name
                 </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider">
-                  Type
+                  Rows
                 </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider text-center">
-                  Rows
+                  Columns
                 </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider">
                   Modified Date
@@ -130,7 +132,7 @@ const Data = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {datasetsMeta.map((ds) => {
                 const rowCount = ds.row_count || (Array.isArray(ds.data) ? ds.data.length : 0);
-                const modifiedDate = ds.lastModified || ds.date || new Date().toISOString().split("T")[0];
+                const modifiedDate = ds.last_updated || ds.date || new Date().toISOString().split("T")[0];
 
                 return (
                   <tr
@@ -138,15 +140,15 @@ const Data = () => {
                     className="hover:bg-slate-100/50 dark:hover:bg-white/5 group"
                   >
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                      {ds.table_name || ds.name || "Untitled Dataset"}
+                      {ds.table_name || "Untitled Dataset"}
                     </td>
                     <td className="p-4">
                       <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">
-                        {ds.type}
+                        {rowCount}
                       </span>
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm text-center font-mono">
-                      {ds.row_count}
+                      {ds.column_count}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm">
                       {modifiedDate}
@@ -183,7 +185,7 @@ const Data = () => {
       {/* Spreadsheet Modal */}
       {selectedDataset && (
         <Spreadsheet
-          open={!!selectedDataset.table_name}
+          open={!!selectedDataset.table_name || selectedDataset.mode === "create"}
           onClose={() => setSelectedDataset(null)}
           mode={selectedDataset.mode || "create"}
           existingDatasetId={selectedDataset.id}

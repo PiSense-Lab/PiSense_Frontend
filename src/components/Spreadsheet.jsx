@@ -2,14 +2,14 @@ import React, { useState, useRef } from "react";
 import ReactDom from "react-dom";
 import { RxCross2 } from "react-icons/rx";
 import SubmitModal from "./SubmitModal";
-import DATA from "../data.js";
 
-import { submitManualData } from "../api/timeseries.js";
+import { submitManualData, bulkEditData } from "../api/timeseries.js";
 
 const DEFAULT_COL_WIDTH = 180;
 const ROW_NUM_WIDTH = 52;
 
 const transformDataToTable = (data) => {
+  console.log("Transforming data to table format:", data);
   if (!data) {
     return { columns: [], rows: [] };
   }
@@ -32,6 +32,7 @@ const transformDataToTable = (data) => {
   }
 
   const keys = Object.keys(arrayData[0]);
+  console.log("Extracted keys for columns:", keys);
 
   // Create columns
   const columns = keys.map((key, i) => ({
@@ -54,7 +55,7 @@ const transformDataToTable = (data) => {
 
 const Spreadsheet = ({
   open,
-  onClose = () => {},
+  onClose = () => { },
   mode = "create",
   existingDatasetId = null,
   initialData = null,
@@ -64,6 +65,17 @@ const Spreadsheet = ({
   const [status, setStatus] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [resizingColumnId, setResizingColumnId] = useState(null);
+
+  // Queue of changes for edit mode: { type, ...payload }
+  // Types:
+  //   cell_edit    — { rowId, colId, colName, value }
+  //   column_add   — { colId, colName }
+  //   column_rename — { colId, oldName, newName }
+  //   column_delete — { colId, colName }
+  const [changeQueue, setChangeQueue] = useState([]);
+
+  const enqueue = (change) =>
+    setChangeQueue((prev) => [...prev, change]);
 
   const headerInputRef = useRef(null);
   const resizingCol = useRef(null);
@@ -81,6 +93,7 @@ const Spreadsheet = ({
       id: `row-${i}`,
       cells: { "col-0": "" },
     }));
+    console.log("Initial dat", initialData)
     // Prefer server data if provided
     if (mode === "edit" && initialData) {
       return transformDataToTable(initialData);
@@ -113,15 +126,33 @@ const Spreadsheet = ({
         r.id === rowId ? { ...r, cells: { ...r.cells, [colId]: value } } : r,
       ),
     }));
+
+    if (mode === "edit") {
+      const colName = columns.find((c) => c.id === colId)?.name;
+      setChangeQueue((prev) => {
+        const filtered = prev.filter(
+          (c) => !(c.type === "cell_edit" && c.rowId === rowId && c.colId === colId)
+        );
+        return [...filtered, { type: "cell_edit", rowId, colId, colName, value }];
+      });
+    }
   };
+
   const commitHeader = (colId, value) => {
+    const oldName = columns.find((c) => c.id === colId)?.name;
+    const newName = value || oldName;
+
     setTableState((prev) => ({
       ...prev,
       columns: prev.columns.map((c) =>
-        c.id === colId ? { ...c, name: value || c.name } : c,
+        c.id === colId ? { ...c, name: newName } : c,
       ),
     }));
     setEditingHeader(null);
+
+    if (mode === "edit" && newName !== oldName) {
+      enqueue({ type: "column_rename", colId, oldName, newName });
+    }
   };
 
   const addColumn = () => {
@@ -137,10 +168,16 @@ const Spreadsheet = ({
         },
       ],
     }));
+
+    if (mode === "edit") {
+      enqueue({ type: "column_add", id, name });
+    }
   };
 
   const deleteColumn = (colId) => {
     if (columns.length <= 1) return;
+    const colName = columns.find((c) => c.id === colId)?.name;
+
     setTableState((prev) => ({
       columns: prev.columns.filter((c) => c.id !== colId),
       rows: prev.rows.map((r) => {
@@ -149,6 +186,10 @@ const Spreadsheet = ({
         return { ...r, cells };
       }),
     }));
+
+    if (mode === "edit") {
+      enqueue({ type: "column_delete", colId, colName });
+    }
   };
 
   const addRows = (count = 10) => {
@@ -203,9 +244,9 @@ const Spreadsheet = ({
   };
 
   // ─────────────────────────────────────────────
-  // Placeholder save/submit
+  // Save/submit
   // ─────────────────────────────────────────────
-  const handleConfirm = async ({ datasetName, datasetType }) => {
+  const handleConfirm = async ({ datasetName }) => {
     setShowConfirm(false);
     setStatus(mode === "create" ? "Submitting…" : "Saving…");
 
@@ -221,11 +262,13 @@ const Spreadsheet = ({
         return obj;
       });
 
+    const projectId = localStorage.getItem("projectid"); // TODO: get actual project ID
+
     if (mode === "create") {
       const result = await submitManualData({
         datasetName,
-        datasetType,
         rows: cleanData,
+        projectId: projectId, // TODO: get actual project ID
       });
 
       if (result.success === false) {
@@ -235,12 +278,18 @@ const Spreadsheet = ({
 
       setStatus("✅ Dataset submitted!");
     } else {
-      // TODO: wire up save/edit endpoint when ready
-      console.log("Dataset ready to save:", {
-        datasetName,
-        datasetType,
+      const result = await bulkEditData({
+        datasetId: existingDatasetId,
+        changes: changeQueue,
         rows: cleanData,
       });
+
+      if (result.success === false) {
+        setStatus(`❌ Error: ${result.message}`);
+        return;
+      }
+
+      setChangeQueue([]);
       setStatus("✅ Changes saved!");
     }
 
@@ -293,6 +342,9 @@ const Spreadsheet = ({
           </button>
           <div className="ml-auto text-sm text-slate-400">
             {rows.length} rows · {columns.length} columns
+            {mode === "edit" && changeQueue.length > 0 && (
+              <span className="ml-3 text-sky">{changeQueue.length} unsaved change{changeQueue.length !== 1 ? "s" : ""}</span>
+            )}
           </div>
         </div>
 
@@ -429,12 +481,12 @@ const Spreadsheet = ({
             <button
               onClick={() => {
                 if (mode === "create") {
-                  setShowConfirm(true); // open modal only for create
+                  setShowConfirm(true);
                 } else {
                   handleConfirm({
                     datasetName: "Existing",
                     datasetType: "Demo",
-                  }); // just save for edit
+                  });
                 }
               }}
               className="px-6 py-2 rounded-lg bg-sky text-white font-bold hover:opacity-90"

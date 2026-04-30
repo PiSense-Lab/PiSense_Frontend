@@ -15,6 +15,10 @@ import usePersistentState from "../../../hooks/usePersistentState";
 
 export function GenerateLineChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
+  if (result.error) {
+    // Display error to user
+    console.error(result.error);
+  }
   const [lineColor, setLineColor] = usePersistentState(
     `${persistenceScope}:color`,
     "#3b82f6",

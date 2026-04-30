@@ -152,11 +152,12 @@ export const uploadData = async (
 // - datasetName: string — user-provided name for the dataset
 // - datasetType: string — category e.g. "weather", "sensor", "custom label"
 // - rows: array of objects — each object is a row keyed by column name
-export const submitManualData = async ({ datasetName, rows }) => {
+export const submitManualData = async ({ datasetName, rows, projectId = 1 }) => {
   try {
     const params = new URLSearchParams({
       table_name: datasetName,
       json_in: JSON.stringify(rows),
+      project_id: projectId,
     });
 
     const response = await fetch(
@@ -178,6 +179,10 @@ export const submitManualData = async ({ datasetName, rows }) => {
     return { success: false, message: error.message };
   }
 };
+
+export const bulkEditData = async (datasetId, changes, rows) => {
+
+}
 
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {

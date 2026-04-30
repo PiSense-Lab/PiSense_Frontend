@@ -62,7 +62,6 @@ const Data = () => {
       }
 
       const projectid = activeProject?.id;
-      console.log("Fetching dataset for project ID:", projectid, "dataset:", dataset);
       const result = await getTable(dataset.table_name, projectid);
 
       if (!result) {

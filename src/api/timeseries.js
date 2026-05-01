@@ -413,6 +413,7 @@ export const ensureDailyWeatherCache = async () => {
  */
 export const getDatasetsForProject = async (projectId) => {
   // Only handle the Weather project (ID: "weather-1")
+  console.log("Fetching datasets for project ID:", projectId);
   const isWeatherProject =
     String(projectId) === "weather-1";
 

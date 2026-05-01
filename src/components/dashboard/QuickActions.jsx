@@ -18,6 +18,7 @@ const QuickActions = ({
     onDatasetChange(dataset);
 
     if (selectedProject?.id && dataset.table_name) {
+    if (selectedProject?.id && dataset.table_name) {
       localStorage.setItem(
         `dashboard:selectedDataset`,
         dataset.table_name,
@@ -36,6 +37,7 @@ const QuickActions = ({
             // const storageKey = getDatasetStorageKey(selectedProject.id);
             const storageKey = `dashboard:selectedDataset`;
             const savedDatasetName = localStorage.getItem(storageKey);
+            console.log("Saved dataset name from localStorage:", savedDatasetName);
             const matchedDataset = ds.find(
               (dataset) => dataset.table_name === savedDatasetName,
             );

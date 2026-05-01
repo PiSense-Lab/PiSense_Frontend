@@ -13,18 +13,13 @@ const QuickActions = ({
   const [datasets, setDatasets] = useState([]);
   const [selectedDatasetName, setSelectedDatasetName] = useState(null);
 
-  // const getDatasetStorageKey = (projectId) =>
-    const getDatasetStorageKey = () =>
-    `dashboard:selectedDataset`;
-
   const handleDatasetChange = (dataset) => {
     setSelectedDatasetName(dataset.table_name);
     onDatasetChange(dataset);
 
     if (selectedProject?.id && dataset.table_name) {
       localStorage.setItem(
-        // getDatasetStorageKey(selectedProject.id),
-        getDatasetStorageKey(),
+        `dashboard:selectedDataset`,
         dataset.table_name,
       );
     }
@@ -39,9 +34,8 @@ const QuickActions = ({
           setDatasets(ds);
           if (ds.length > 0) {
             // const storageKey = getDatasetStorageKey(selectedProject.id);
-            const storageKey = getDatasetStorageKey();
+            const storageKey = `dashboard:selectedDataset`;
             const savedDatasetName = localStorage.getItem(storageKey);
-            console.log("Saved dataset name from localStorage:", savedDatasetName);
             const matchedDataset = ds.find(
               (dataset) => dataset.table_name === savedDatasetName,
             );

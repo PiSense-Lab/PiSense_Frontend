@@ -66,32 +66,32 @@ const buildWeatherDatasets = (
     id: "weather_forecast_hourly",
     table_name: "Hourly Weather Forecast",
     description: "7-day hourly weather forecast based on your location.",
-    row_count: forecastHourly.length,
-    column_count: forecastHourly[0] ? Object.keys(forecastHourly[0]).length : 0,
+    row_count: forecastHourly.hourly.length,
+    column_count: forecastHourly.hourly[0] ? Object.keys(forecastHourly.hourly[0]).length : 0,
     data: forecastHourly,
   },
   {
     id: "weather_forecast_daily",
     table_name: "Daily Weather Forecast",
     description: "7-day daily weather forecast based on your location.",
-    row_count: forecastDaily.length,
-    column_count: forecastDaily[0] ? Object.keys(forecastDaily[0]).length : 0,
+    row_count: forecastDaily.daily.length,
+    column_count: forecastDaily.daily[0] ? Object.keys(forecastDaily.daily[0]).length : 0,
     data: forecastDaily,
   },
   {
     id: "weather_historical_hourly",
     table_name: "Hourly Historical Weather",
     description: "Hourly historical weather data for the past year.",
-    row_count: historicalHourly.length,
-    column_count: historicalHourly[0] ? Object.keys(historicalHourly[0]).length : 0,
+    row_count: historicalHourly.hourly.length,
+    column_count: historicalHourly.hourly[0] ? Object.keys(historicalHourly.hourly[0]).length : 0,
     data: historicalHourly,
   },
   {
     id: "weather_historical_daily",
     table_name: "Daily Historical Weather",
     description: "Daily historical weather data for the past year.",
-    row_count: historicalDaily.length,
-    column_count: historicalDaily[0] ? Object.keys(historicalDaily[0]).length : 0,
+    row_count: historicalDaily.daily.length,
+    column_count: historicalDaily.daily[0] ? Object.keys(historicalDaily.daily[0]).length : 0,
     data: historicalDaily,
   },
 ];
@@ -379,6 +379,13 @@ const fetchWeatherDatasetBundle = async () => {
     }),
   ]);
 
+  console.log("Fetched weather data:", {
+    forecastHourly,
+    forecastDaily,
+    historicalHourly,
+    historicalDaily,
+  });
+
   return buildWeatherDatasets(
     forecastHourly,
     forecastDaily,
@@ -406,7 +413,6 @@ export const ensureDailyWeatherCache = async () => {
  */
 export const getDatasetsForProject = async (projectId) => {
   // Only handle the Weather project (ID: "weather-1")
-  console.log("Fetching datasets for project ID:", projectId);
   const isWeatherProject =
     String(projectId) === "weather-1";
 
@@ -430,6 +436,7 @@ export const getDatasetsForProject = async (projectId) => {
   }
   // get data from weather cache (or fetch if not present/expired) and return in expected format
   const weatherData = await ensureDailyWeatherCache();
+  console.log("Weather datasets for project:", weatherData);
   
   // Return datasets formatted for UI consumption
   return [  

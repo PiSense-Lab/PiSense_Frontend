@@ -18,7 +18,6 @@ const QuickActions = ({
     onDatasetChange(dataset);
 
     if (selectedProject?.id && dataset.table_name) {
-    if (selectedProject?.id && dataset.table_name) {
       localStorage.setItem(
         `dashboard:selectedDataset`,
         dataset.table_name,

@@ -180,9 +180,108 @@ export const submitManualData = async ({ datasetName, rows }) => {
   }
 };
 
-export const bulkEditData = async (datasetId, changes, rows) => {
+export const editTable = async ({ datasetId, changes, rows }) => {
+  try {
+    const formattedChanges = [];
 
-}
+    // Consolidate cell_edits by row first
+    const rowEdits = {};
+    changes
+      .filter((c) => c.type === "cell_edit")
+      .forEach((c) => {
+        if (!rowEdits[c.rowId]) rowEdits[c.rowId] = {};
+        rowEdits[c.rowId][c.colName] = c.value;
+      });
+
+    // cell_edit → "edit_row"
+    Object.entries(rowEdits).forEach(([rowId, cellChanges]) => {
+      const rowIndex = rows.findIndex((r) => r.id === rowId);
+      if (rowIndex === -1) return;
+
+      formattedChanges.push({
+        type: "edit_row",
+        table_name: datasetId,
+        row_num: rowIndex + 1, // 1-indexed
+        row_data: Object.values(cellChanges),
+        row_columns: Object.keys(cellChanges),
+      });
+    });
+
+    changes
+      .filter((c) => c.type === "row_insert")
+      .forEach((c) => {
+        formattedChanges.push({
+          type: "insert_rows",
+          table_name: datasetId,
+          column_name: Object.keys(c.rowData),
+          rows: [Object.values(c.rowData)],
+        });
+      });
+
+    changes
+      .filter((c) => c.type === "row_delete")
+      .forEach((c) => {
+        const rowIndex = rows.findIndex((r) => r.id === c.rowId);
+        if (rowIndex === -1) return;
+        formattedChanges.push({
+          type: "delete_row",
+          table_name: datasetId,
+          row_num: rowIndex + 1,
+        });
+      });
+
+    // column_add → "add_column"
+    changes
+      .filter((c) => c.type === "column_add")
+      .forEach((c) => {
+        formattedChanges.push({
+          type: "add_column",
+          table_name: datasetId,
+          column_name: [c.name],
+          column_type: ["VARCHAR(255)"], // default type — adjust if you collect this
+        });
+      });
+
+    // column_rename → "rename_column"
+    changes
+      .filter((c) => c.type === "column_rename")
+      .forEach((c) => {
+        formattedChanges.push({
+          type: "rename_column",
+          table_name: datasetId,
+          old_column_name: c.oldName,
+          new_column_name: c.newName,
+        });
+      });
+
+    // column_delete → "delete_column"
+    changes
+      .filter((c) => c.type === "column_delete")
+      .forEach((c) => {
+        formattedChanges.push({
+          type: "delete_column",
+          table_name: datasetId,
+          column_name: [c.colName],
+        });
+      });
+
+    const response = await fetch(`${BASE_URL}/datatables/edit_table`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formattedChanges),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      return { success: false, message: err.detail || "Unknown error" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error editing table:", error);
+    return { success: false, message: error.message };
+  }
+};
 
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {

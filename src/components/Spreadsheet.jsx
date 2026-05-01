@@ -3,7 +3,7 @@ import ReactDom from "react-dom";
 import { RxCross2 } from "react-icons/rx";
 import SubmitModal from "./SubmitModal";
 
-import { submitManualData, bulkEditData } from "../api/timeseries.js";
+import { submitManualData, editTable } from "../api/timeseries.js";
 
 const DEFAULT_COL_WIDTH = 180;
 const ROW_NUM_WIDTH = 52;
@@ -72,6 +72,8 @@ const Spreadsheet = ({
   //   column_add   — { colId, colName }
   //   column_rename — { colId, oldName, newName }
   //   column_delete — { colId, colName }
+  //   row_delete
+  //   rows_add
   const [changeQueue, setChangeQueue] = useState([]);
 
   const enqueue = (change) =>
@@ -129,12 +131,32 @@ const Spreadsheet = ({
 
     if (mode === "edit") {
       const colName = columns.find((c) => c.id === colId)?.name;
-      setChangeQueue((prev) => {
-        const filtered = prev.filter(
-          (c) => !(c.type === "cell_edit" && c.rowId === rowId && c.colId === colId)
-        );
-        return [...filtered, { type: "cell_edit", rowId, colId, colName, value }];
-      });
+      const isNewRow = changeQueue.some(
+        (c) => c.type === "row_insert" && c.rowId === rowId
+      ) || rowId.startsWith("row-"); // or however you distinguish local vs server rows
+
+      if (isNewRow) {
+        // Accumulate cells into the existing row_insert entry
+        setChangeQueue((prev) => {
+          const existing = prev.find((c) => c.type === "row_insert" && c.rowId === rowId);
+          if (existing) {
+            return prev.map((c) =>
+              c.type === "row_insert" && c.rowId === rowId
+                ? { ...c, rowData: { ...c.rowData, [colName]: value } }
+                : c
+            );
+          }
+          return [...prev, { type: "row_insert", rowId, rowData: { [colName]: value } }];
+        });
+      } else {
+        // existing cell_edit dedup logic
+        setChangeQueue((prev) => {
+          const filtered = prev.filter(
+            (c) => !(c.type === "cell_edit" && c.rowId === rowId && c.colId === colId)
+          );
+          return [...filtered, { type: "cell_edit", rowId, colId, colName, value }];
+        });
+      }
     }
   };
 
@@ -205,11 +227,16 @@ const Spreadsheet = ({
     }));
   };
 
-  const deleteRow = (rowId) =>
+  const deleteRow = (rowId) => {
     setTableState((prev) => ({
       ...prev,
       rows: prev.rows.filter((r) => r.id !== rowId),
     }));
+
+    if (mode === "edit") {
+      enqueue({ type: "row_delete", rowId });
+    }
+  };
 
   // ─────────────────────────────────────────────
   // Resize logic
@@ -275,10 +302,10 @@ const Spreadsheet = ({
 
       setStatus("✅ Dataset submitted!");
     } else {
-      const result = await bulkEditData({
-        datasetId: existingDatasetId,
+      const result = await editTable({
+        tableName: existingDatasetId,
         changes: changeQueue,
-        rows: cleanData,
+        rows,
       });
 
       if (result.success === false) {
@@ -482,7 +509,6 @@ const Spreadsheet = ({
                 } else {
                   handleConfirm({
                     datasetName: "Existing",
-                    datasetType: "Demo",
                   });
                 }
               }}

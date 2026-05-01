@@ -41,7 +41,7 @@ const QuickActions = ({
               (dataset) => dataset.table_name === savedDatasetName,
             );
             const initialDatasetName = matchedDataset ?? ds[0];
-
+            localStorage.setItem('numofdatasets', ds.length);
             setSelectedDatasetName(initialDatasetName);
             onDatasetChange(initialDatasetName);
           }

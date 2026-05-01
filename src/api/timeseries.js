@@ -256,7 +256,7 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
   const weatherProject = {
     id: "weather-1",
     name: "Weather",
-    last_update: new Date().toISOString().split("T")[0],
+    last_updated: new Date().toISOString().split("T")[0],
     total_datasets: 4,
     anomalies: 0,
   };

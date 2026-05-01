@@ -15,7 +15,7 @@ const Data = () => {
   useEffect(() => {
     const fetchDatasets = async () => {
       if (!activeProject) return;
-      
+
       setLoading(true);
       try {
         const projectid = activeProject.id;
@@ -36,20 +36,11 @@ const Data = () => {
           setLoading(false);
           return;
         }
+        const data = await getDatasetsForProject(projectid);
+        if (data) {
 
-        const tableNames = await getDatasetsForProject(projectid);
-        console.log(tableNames)
-        if (!tableNames) return;
-
-        const normalized = tableNames.map((table) => ({
-          id: table.table_name,
-          name: table.table_name,
-          rows: table.row_count,
-          columns: 0, // not provided by this endpoint
-          lastModified: table.last_updated,
-        }));
-
-        setDatasetsMeta(normalized);
+          setDatasetsMeta(data);
+        }
       } catch (error) {
         console.error("Failed to fetch datasets:", error);
       } finally {
@@ -64,29 +55,26 @@ const Data = () => {
 
 
   const handleViewDataset = async (dataset) => {
-    console.log("Viewing dataset:", dataset);
     if (dataset.mode === "edit") {
       if (dataset.data) {
-        setSelectedDataset({ ...dataset, mode: "edit" });
+        setSelectedDataset({ ...dataset, data: dataset.data });
         return;
       }
 
       const projectid = activeProject?.id;
-      console.log("Fetching dataset for project ID:", projectid, "dataset:", dataset);
-      const result = await getTable(dataset.name, projectid);
-      console.log("Fetched dataset for viewing/editing:", result);
+      const result = await getTable(dataset.table_name, projectid);
 
       if (!result) {
         console.error("Failed to load dataset");
         return;
       }
-
+      console.log("Fetched dataset data:", result);
       setSelectedDataset({ ...dataset, data: result });
     } else {
+      console.log("Creating new dataset");
       setSelectedDataset(dataset);
     }
   };
-  console.log("Selected dataset:", selectedDataset);
 
   return (
     <div className="p-4 flex flex-col gap-4">
@@ -105,6 +93,7 @@ const Data = () => {
             handleViewDataset({
               mode: "create",
               id: null,
+              table_name: "", // Empty table_name ensures Spreadsheet opens in create mode
             })
           }
           className="bg-sky text-white w-25 h-10"
@@ -126,7 +115,7 @@ const Data = () => {
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider">
                   Dataset Name
                 </th>
-                <th className="p-4 font-semibold text-xs uppercase tracking-wider text-center">
+                <th className="p-4 font-semibold text-xs uppercase tracking-wider">
                   Rows
                 </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider text-center">
@@ -142,21 +131,24 @@ const Data = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {datasetsMeta.map((ds) => {
-                const modifiedDate = ds.lastModified || ds.date || new Date().toISOString().split("T")[0];
+                const rowCount = ds.row_count || (Array.isArray(ds.data) ? ds.data.length : 0);
+                const modifiedDate = ds.last_updated || ds.date || new Date().toISOString().split("T")[0];
 
                 return (
                   <tr
-                    key={ds.id}
+                    key={ds.id ?? ds.table_name ?? ds}
                     className="hover:bg-slate-100/50 dark:hover:bg-white/5 group"
                   >
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                      {ds.name || ds}
+                      {ds.table_name || "Untitled Dataset"}
+                    </td>
+                    <td className="p-4">
+                      <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">
+                        {rowCount}
+                      </span>
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm text-center font-mono">
-                      {(ds.rows ?? 0).toLocaleString()}
-                    </td>
-                    <td className="p-4 text-slate-500 dark:text-slate-400 text-sm text-center font-mono">
-                      {(ds.columns ?? 0).toLocaleString()}   {/* was using rowCount for both */}
+                      {ds.column_count}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm">
                       {modifiedDate}
@@ -193,7 +185,7 @@ const Data = () => {
       {/* Spreadsheet Modal */}
       {selectedDataset && (
         <Spreadsheet
-          open={!!selectedDataset}
+          open={!!selectedDataset.table_name || selectedDataset.mode === "create"}
           onClose={() => setSelectedDataset(null)}
           mode={selectedDataset.mode || "create"}
           existingDatasetId={selectedDataset.id}

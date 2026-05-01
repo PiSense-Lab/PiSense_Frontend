@@ -16,7 +16,11 @@ import usePersistentState from "../../../hooks/usePersistentState";
 
 export function GenerateCompareChart({ jsonData, persistenceScope }) {
   const result = buildTimeSeries(jsonData);
-  console.log("Compare Chart data:", result);
+  if (result.error) {
+    // Display error to user
+    console.error(result.error);
+  }
+ 
 
   const metricKeys = result?.metricKeys || [];
 

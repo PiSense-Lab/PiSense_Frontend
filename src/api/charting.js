@@ -20,12 +20,19 @@
 export function buildTimeSeries(json) {
   //print the raw JSON to frontend console for debugging
   const data = extractArray(json);
-  if (!data || data.length === 0) return null;
+  if (!data || data.length === 0) {
+    return { error: "No data found: Input data is empty or invalid" };
+  }
 
   const timeConfig = detectTime(data);
-  if (!timeConfig) return null;
+  if (!timeConfig) {
+    return { error: "No time field detected: Could not identify a timestamp field in the data" };
+  }
 
   const metricKeys = detectNumericFields(data, timeConfig);
+  if (metricKeys.length === 0) {
+    return { error: "No numeric metrics found: Could not identify any numeric fields to chart" };
+  }
 
   const normalized = data.map(row => {
   
@@ -119,7 +126,6 @@ function extractArray(json) {
 function detectTime(data) {
   const sample = data.slice(0, 20);
   const keys = Object.keys(sample[0]);
-  console.log("Sample", sample);
 
   // Composite case: date + time
   if (keys.includes("date") && keys.includes("time")) {
@@ -166,7 +172,6 @@ function detectTime(data) {
       bestType = detectedType;
     }
   }
-  console.log("Time Type", bestType, "Key:", bestKey, "Score:", bestScore);
   return bestKey ? { type: bestType, key: bestKey } : null;
 }
 
@@ -185,7 +190,11 @@ function detectTime(data) {
  */
 function buildTimestamp(row, config) {
   if (config.type === "composite") {
-    return new Date(`${row.date}T${row.time}`).toISOString();
+    const date = new Date(`${row.date}T${row.time}`);
+    if (isNaN(date.getTime())) {
+      return { error: `Invalid date composite: ${row.date}T${row.time}` };
+    }
+    return date.toISOString();
   }
   // for short tests
   if (config.type === "time-only") {
@@ -196,7 +205,11 @@ function buildTimestamp(row, config) {
     return parseTimeToSeconds(row[config.key]);
   }
   
-  return new Date(row[config.key]).toISOString();
+  const date = new Date(row[config.key]);
+  if (isNaN(date.getTime())) {
+    return { error: `Invalid timestamp value: ${row[config.key]}` };
+  }
+  return date.toISOString();
 }
 
 function parseTimeToSeconds(timeStr) {

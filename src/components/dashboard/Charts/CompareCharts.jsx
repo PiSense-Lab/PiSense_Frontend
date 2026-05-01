@@ -12,10 +12,13 @@ import { useEffect, useMemo } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { DualMetricSelectPanel } from "./chart-support/DualMetricSelectPanel";
 import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import { DateRangeFilterPanel } from "./chart-support/DateRangeFilterPanel";
+import { ExportGraphButton } from "./chart-support/ExportGraphButton";
 import { getAdaptiveTimeFormatters } from "./chart-support/timeAxisFormatters";
 import usePersistentState from "../../../hooks/usePersistentState";
+import useDateRangeFilter from "../../../hooks/useDateRangeFilter";
 
-export function GenerateCompareChart({ jsonData, persistenceScope }) {
+export function GenerateCompareChart({ jsonData, persistenceScope, onExport }) {
   const result = buildTimeSeries(jsonData);
   console.log("Compare Chart data:", result);
 
@@ -62,6 +65,22 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
     return <div>No valid time-series data found.</div>;
   }
 
+  const {
+    activeRange,
+    startValue,
+    endValue,
+    minValue,
+    maxValue,
+    invalidRange,
+    filteredData,
+    onRangeChange,
+    onStartChange,
+    onEndChange,
+  } = useDateRangeFilter({
+    data: result.data,
+    persistenceScope,
+  });
+
   const formatLabel = (key) =>
     key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -73,7 +92,9 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
   };
 
   const { formatTick: formatXAxisTime, formatTooltip: formatTooltipTime } =
-    getAdaptiveTimeFormatters(result.data);
+    getAdaptiveTimeFormatters(
+      filteredData.length > 0 ? filteredData : result.data,
+    );
 
   return (
     <div>
@@ -108,6 +129,12 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
         </label>
       </div>
 
+      {filteredData.length === 0 && !invalidRange && (
+        <div className="mb-3 text-sm text-slate-500 dark:text-slate-300">
+          No data points found in the selected date range.
+        </div>
+      )}
+
       {/* Dual Y-Axis Chart */}
       {leftMetric && rightMetric && leftMetric !== rightMetric && (
         <>
@@ -132,8 +159,8 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
             </div>
           )}
 
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={result.data}>
+          <ResponsiveContainer width="100%" height={460}>
+            <LineChart data={filteredData}>
               <CartesianGrid strokeDasharray="5 5" />
 
               <XAxis
@@ -203,6 +230,24 @@ export function GenerateCompareChart({ jsonData, persistenceScope }) {
           </ResponsiveContainer>
         </>
       )}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+        <DateRangeFilterPanel
+          activeRange={activeRange}
+          startValue={startValue}
+          endValue={endValue}
+          minValue={minValue}
+          maxValue={maxValue}
+          invalidRange={invalidRange}
+          onStartChange={onStartChange}
+          onEndChange={onEndChange}
+          onRangeChange={onRangeChange}
+        />
+
+        <div className="ml-auto">
+          <ExportGraphButton onClick={onExport} />
+        </div>
+      </div>
 
       {(!leftMetric || !rightMetric || leftMetric === rightMetric) && (
         <div style={{ padding: "40px", textAlign: "center", color: "#6b7280" }}>

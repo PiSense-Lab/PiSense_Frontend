@@ -17,18 +17,20 @@ function detectGranularity(timestamps) {
   const sorted = [...timestamps].sort((a, b) => a - b);
   const span = sorted[sorted.length - 1] - sorted[0];
 
-  let minDelta = Infinity;
+  const deltas = [];
   for (let i = 1; i < sorted.length; i += 1) {
     const delta = sorted[i] - sorted[i - 1];
-    if (delta > 0 && delta < minDelta) {
-      minDelta = delta;
-    }
+    if (delta > 0) deltas.push(delta);
   }
 
-  if (!Number.isFinite(minDelta)) return "datetime";
-  if (minDelta < MINUTE) return "seconds";
-  if (minDelta < HOUR) return "minutes";
-  if (minDelta < DAY) return "hours";
+  if (deltas.length === 0) return "datetime";
+
+  deltas.sort((a, b) => a - b);
+  const representativeDelta = deltas[Math.floor(deltas.length / 2)];
+
+  if (representativeDelta < MINUTE) return "seconds";
+  if (representativeDelta < HOUR) return "minutes";
+  if (representativeDelta < DAY) return "hours";
   if (span <= 400 * DAY) return "days";
   if (span <= 6 * 365 * DAY) return "months";
   return "years";

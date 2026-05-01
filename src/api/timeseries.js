@@ -469,5 +469,29 @@ export const getDatasetsForProject = async (projectId) => {
  
 };
   
+export const createProject = async (projectName, userId, description, public_val = false, archived = false) => {
+  try {
+    const params = new URLSearchParams({
+      name: projectName,
+      user_id: userId,
+      description: description,
+      public: public_val, // boolean
+      archived: archived, // boolean
+    });
+
+    const response = await fetch(`${BASE_URL}/projects/create_project?${params}`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating project:", error);
+    return { success: false, message: error.message };
+  }
+};
 
 

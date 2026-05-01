@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import useDarkMode from "../../hooks/useDarkMode";
 import { useNavigate } from "react-router-dom";
 import { getProjects } from "../../api/timeseries";
+import { NewProjectButton } from "../NewProjectButton";
+import NewProjectModal from "../NewProjectModal";
 
 // ICONS //
 import { LuUser, LuLogOut } from "react-icons/lu";
@@ -16,6 +18,7 @@ const Header = ({ onProjectChange }) => {
   const [selectedProject, setSelectedProject] = useState(null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
 
   // Fetch projects on mount
   useEffect(() => {
@@ -71,6 +74,10 @@ const Header = ({ onProjectChange }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleNewProject = () => {
+    setIsNewProjectOpen(true);
+  };
+
   return (
     <div className="flex left-16 md:left-56 right-0 fixed z-10 shadow-xs md:justify-between justify-end items-center p-4 pl-1 bg-white dark:bg-midnight dark:text-white">
       {/* Project Selector */}
@@ -93,6 +100,7 @@ const Header = ({ onProjectChange }) => {
             </option>
           ))}
         </select>
+        <NewProjectButton onClick={handleNewProject} />
       </div>
 
       {/* Right side controls */}
@@ -134,6 +142,9 @@ const Header = ({ onProjectChange }) => {
           )}
         </div>
       </div>
+      {isNewProjectOpen && (
+        <NewProjectModal onClose={() => setIsNewProjectOpen(false)} />
+      )}
     </div>
   );
 };

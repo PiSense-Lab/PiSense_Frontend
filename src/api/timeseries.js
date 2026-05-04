@@ -267,7 +267,7 @@ export const editTable = async ({ datasetId, changes, rows }) => {
       });
 
 
-    console.log("Payload:", JSON.stringify(formattedChanges, null, 2));
+    console.log(JSON.stringify(formattedChanges, null, 2));
     const response = await fetch(`${BASE_URL}/datatables/edit_table?table_name=${encodeURIComponent(datasetId)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

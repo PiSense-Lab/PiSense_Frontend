@@ -4,6 +4,9 @@ import BASE_URL from "./base_url";
 const normalize = (n) => Math.round(n * 100) / 100; // ~1km precision
 
 const WEATHER_CACHE_KEY = "weatherDailyCache";
+const tableCache = new Map();
+
+const getTableCacheKey = (tableName, projectId) => `${projectId}:${tableName}`;
 
 const decodeJwtPayload = (token) => {
   if (!token) return null;
@@ -107,6 +110,8 @@ export const uploadData = async (
   projectId = 1,
 ) => {
   try {
+    userId = getStoredUserIdentity().userId;
+    projectId = localStorage.getItem("projectid");
     const formData = new FormData();
     formData.append("file", file);
 
@@ -186,17 +191,25 @@ export const bulkEditData = async (datasetId, changes, rows) => {
 
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
-  const isWeatherProject =
-    String(projectId) === "weather-1";
+  const cacheKey = getTableCacheKey(tableName, projectId);
+  if (tableCache.has(cacheKey)) {
+    return tableCache.get(cacheKey);
+  }
+
+  const isWeatherProject = String(projectId) === "weather-1";
 
   if (isWeatherProject) {
     const cache = getWeatherCache();
     if (cache && isSameCacheDay(cache.date) && Array.isArray(cache.data)) {
-      return cache.data.find((d) => d.table_name === tableName)?.data || null;
+      const data = cache.data.find((d) => d.table_name === tableName)?.data || null;
+      if (data !== null) tableCache.set(cacheKey, data);
+      return data;
     }
 
     const weatherData = await ensureDailyWeatherCache();
-    return weatherData.find((d) => d.table_name === tableName)?.data || null;
+    const data = weatherData.find((d) => d.table_name === tableName)?.data || null;
+    if (data !== null) tableCache.set(cacheKey, data);
+    return data;
   }
 
   try {
@@ -204,9 +217,7 @@ export const getTable = async (tableName, projectId) => {
       table_name: tableName,
       project_id: projectId,
     });
-    const response = await fetch(
-      `${BASE_URL}/datatables/get_table?${params}`,
-    );
+    const response = await fetch(`${BASE_URL}/datatables/get_table?${params}`);
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
@@ -228,7 +239,9 @@ export const getTable = async (tableName, projectId) => {
       return null;
     };
 
-    return extractTableData(json);
+    const data = extractTableData(json);
+    if (data !== null) tableCache.set(cacheKey, data);
+    return data;
   } catch (error) {
     console.error("Error fetching table:", error);
     return null;
@@ -473,7 +486,7 @@ export const createProject = async (projectName, userId, description, public_val
   try {
     const params = new URLSearchParams({
       name: projectName,
-      user_id: userId,
+      owner_id: userId,
       description: description,
       public: public_val, // boolean
       archived: archived, // boolean

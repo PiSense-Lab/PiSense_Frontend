@@ -18,7 +18,7 @@ const NewProjectModal = ({ onClose, onSuccess }) => {
 
     setLoading(true);
 
-    const userId = localStorage.getItem("user_id");
+    const userId = localStorage.getItem("userId");
 
     const result = await createProject(
       projectName.trim(),
@@ -37,6 +37,7 @@ const NewProjectModal = ({ onClose, onSuccess }) => {
 
     onSuccess?.(result);
     onClose();
+    window.location.reload();
   };
 
   return (

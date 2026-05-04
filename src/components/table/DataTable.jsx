@@ -85,7 +85,6 @@ const DataTable = () => {
                 ),
         }
     });
-    console.log(data);
     return (
         // TABLE
         <div className="p-20">

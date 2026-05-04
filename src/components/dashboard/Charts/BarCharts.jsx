@@ -21,7 +21,10 @@ const CHART_HEIGHT = 460;
 
 export function GenerateBarChart({ jsonData, persistenceScope, onExport }) {
   const result = buildTimeSeries(jsonData);
-  console.log("Bar Chart data:", result);
+  if (result.error) {
+    // Display error to user
+    console.error(result.error);
+  }
   const [barColor, setBarColor] = usePersistentState(
     `${persistenceScope}:color`,
     "#22c55e",

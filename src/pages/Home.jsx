@@ -2,32 +2,26 @@ import React, { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import Graph from "../components/dashboard/Graph";
 import QuickActions from "../components/dashboard/QuickActions";
-import AIInsight from "../components/dashboard/AIInsight";
-import SystemMonitor from "../components/dashboard/SystemMonitor";
 import SelectedProject from "../components/SelectedProject";
-import { uploadData, getTable } from "../api/timeseries";
 
 const Home = () => {
   const { activeProject } = useOutletContext();
 
-  const [manualData, setManualData] = useState("");
-  const [uploadFiles, setUploadFiles] = useState([]);
-  const [processedData, setProcessedData] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [selectedDataset, setSelectedDataset] = useState(null);
 
-  const handleManualSubmit = async () => {
-    setLoading(true);
-    console.log("Manual submit initiated...");
-    setTimeout(() => {
-      setLoading(false);
-      alert("Manual data processed!");
-    }, 1000);
-  };
+  // Use project ID as key to force re-render when project changes
+  const projectKey = activeProject?.id;
 
   const handleFileUpload = async () => {
     console.log("Success signal received from FileImport!");
   };
+
+  const handleManualSubmit = async () => {
+    console.log("Manual submit initiated...");
+    alert("Manual data processed!");
+  };
+
+  const setUploadFiles = () => {}; // Placeholder - can be expanded later
 
   return (
     <div className="flex flex-col gap-4">
@@ -38,8 +32,8 @@ const Home = () => {
       <div className="grid md:flex gap-4">
         <div className="flex-2 min-w-0">
           <Graph
-            data={processedData}
-            projectId={activeProject?.project_id}
+            key={projectKey}
+            projectId={activeProject?.id}
             dataset={selectedDataset}
           />
         </div>
@@ -56,8 +50,8 @@ const Home = () => {
 
       {/* AIInsight + SystemMonitor */}
       {/* <div className="grid md:grid-cols-2 gap-4">
-        <AIInsight projectId={activeProject?.project_id} />
-        <SystemMonitor projectId={activeProject?.project_id} />
+        <AIInsight projectId={activeProject?.id} />
+        <SystemMonitor projectId={activeProject?.id} />
       </div> */}
     </div>
   );

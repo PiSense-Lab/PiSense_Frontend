@@ -13,17 +13,14 @@ const QuickActions = ({
   const [datasets, setDatasets] = useState([]);
   const [selectedDatasetName, setSelectedDatasetName] = useState(null);
 
-  const getDatasetStorageKey = (projectId) =>
-    `dashboard:selectedDataset:${projectId}`;
+  const handleDatasetChange = (dataset) => {
+    setSelectedDatasetName(dataset.table_name);
+    onDatasetChange(dataset);
 
-  const handleDatasetChange = (datasetName) => {
-    setSelectedDatasetName(datasetName);
-    onDatasetChange(datasetName);
-
-    if (selectedProject?.project_id && datasetName) {
+    if (selectedProject?.id && dataset.table_name) {
       localStorage.setItem(
-        getDatasetStorageKey(selectedProject.project_id),
-        datasetName,
+        `dashboard:selectedDataset`,
+        dataset.table_name,
       );
     }
   };
@@ -31,19 +28,20 @@ const QuickActions = ({
   // Fetch datasets whenever selectedProject changes
   useEffect(() => {
     const fetchDatasets = async () => {
-      if (selectedProject?.project_id) {
+      if (selectedProject?.id) {
         try {
-          const ds = await getDatasetsForProject(selectedProject.project_id);
+          const ds = await getDatasetsForProject(selectedProject.id);
           setDatasets(ds);
           if (ds.length > 0) {
-            console.log("Datasets fetched for project:", ds); // debug log
-            const storageKey = getDatasetStorageKey(selectedProject.project_id);
+            // const storageKey = getDatasetStorageKey(selectedProject.id);
+            const storageKey = `dashboard:selectedDataset`;
             const savedDatasetName = localStorage.getItem(storageKey);
+            console.log("Saved dataset name from localStorage:", savedDatasetName);
             const matchedDataset = ds.find(
-              (dataset) => dataset.name === savedDatasetName,
+              (dataset) => dataset.table_name === savedDatasetName,
             );
-            const initialDatasetName = matchedDataset?.name ?? ds[0].name;
-
+            const initialDatasetName = matchedDataset ?? ds[0];
+            localStorage.setItem('numofdatasets', ds.length);
             setSelectedDatasetName(initialDatasetName);
             onDatasetChange(initialDatasetName);
           }

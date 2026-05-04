@@ -1,22 +1,46 @@
 import React, { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
 import Spreadsheet from "../components/Spreadsheet";
 import { RxTrash, RxDownload } from "react-icons/rx";
 import RoundButton from "../components/RoundButton";
-import DATA from "../data"; // import your data.js
-
-import { getTable, getTables } from "../api/timeseries";
+import { getTable, getDatasetsForProject } from "../api/timeseries";
 
 const Data = () => {
+  const { activeProject } = useOutletContext();
   const [selectedDataset, setSelectedDataset] = useState(null);
   const [datasetsMeta, setDatasetsMeta] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch datasets when project changes
   useEffect(() => {
     const fetchDatasets = async () => {
+      if (!activeProject) return;
+      
+      setLoading(true);
       try {
-        const projectid = JSON.parse(localStorage.getItem("projectid"));
-        const data = await getTables(projectid);
+        const projectid = activeProject.id;
+        localStorage.setItem("projectid", JSON.stringify(projectid));
+        if (projectid === "weather-1") {
+          const cachedRaw = localStorage.getItem("weatherDailyCache");
+          const cachedData = cachedRaw ? JSON.parse(cachedRaw) : null;
+          const datasets = Array.isArray(cachedData?.data) ? cachedData.data : [];
+          console.log("Cached weather datasets:", datasets.length);
+
+          if (datasets.length > 0) {
+            setDatasetsMeta(datasets);
+            setLoading(false);
+            return;
+          }
+
+          // const projectDatasets = await getDatasetsForProject(projectid);
+          // console.log("Fetched weather datasets from API:", projectDatasets);
+          // setDatasetsMeta(projectDatasets);
+          // setLoading(false);
+          // return;
+        }
+        const data = await getDatasetsForProject(projectid);
         if (data) {
+
           setDatasetsMeta(data);
         }
       } catch (error) {
@@ -27,22 +51,29 @@ const Data = () => {
     };
 
     fetchDatasets();
-  }, []);
+  }, [activeProject]);
 
   // get data from the backend api from projectid and put the basic table data in the datasetsmeta
 
 
   const handleViewDataset = async (dataset) => {
     if (dataset.mode === "edit") {
-      const result = await getTable(dataset.name);
+      if (dataset.data) {
+        setSelectedDataset({ ...dataset, data: dataset.data });
+        return;
+      }
+
+      const projectid = activeProject?.id;
+      const result = await getTable(dataset.table_name, projectid);
 
       if (!result) {
         console.error("Failed to load dataset");
         return;
       }
-
+      console.log("Fetched dataset data:", result);
       setSelectedDataset({ ...dataset, data: result });
     } else {
+      console.log("Creating new dataset");
       setSelectedDataset(dataset);
     }
   };
@@ -64,6 +95,7 @@ const Data = () => {
             handleViewDataset({
               mode: "create",
               id: null,
+              table_name: "", // Empty table_name ensures Spreadsheet opens in create mode
             })
           }
           className="bg-sky text-white w-25 h-10"
@@ -86,10 +118,10 @@ const Data = () => {
                   Dataset Name
                 </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider">
-                  Type
+                  Rows
                 </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider text-center">
-                  Rows
+                  Columns
                 </th>
                 <th className="p-4 font-semibold text-xs uppercase tracking-wider">
                   Modified Date
@@ -101,34 +133,34 @@ const Data = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {datasetsMeta.map((ds) => {
-                // For now, set rowCount to 0 since we don't have it from API
-                const rowCount = ds.rows || 0;
+                const rowCount = ds.row_count || (Array.isArray(ds.data) ? ds.data.length : 0);
+                const modifiedDate = ds.last_updated || ds.date || new Date().toISOString().split("T")[0];
 
                 return (
                   <tr
-                    key={ds.id}
+                    key={ds.id ?? ds.table_name ?? ds}
                     className="hover:bg-slate-100/50 dark:hover:bg-white/5 group"
                   >
                     <td className="p-4 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                      {ds.name}
+                      {ds.table_name || "Untitled Dataset"}
                     </td>
                     <td className="p-4">
                       <span className="text-[11px] font-bold px-2 py-1 bg-sky/10 text-sky rounded uppercase border border-sky/20">
-                        {ds.type}
+                        {rowCount}
                       </span>
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm text-center font-mono">
-                      {rowCount.toLocaleString()}
+                      {ds.column_count}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-sm">
-                      {ds.lastModified}
+                      {modifiedDate}
                     </td>
                     <td className="p-4">
                       <div className="flex justify-end items-center gap-4">
-                        <button
-                          onClick={() =>
-                            handleViewDataset({ name: ds.name, mode: "edit" })
-                          }
+                          <button
+                            onClick={() =>
+                              handleViewDataset({ ...ds, mode: "edit" })
+                            }
                           className="px-6 py-1.5 bg-sky text-white text-sm font-bold rounded-lg hover:bg-sky/90 shadow-sm shadow-sky/10"
                         >
                           View
@@ -155,11 +187,11 @@ const Data = () => {
       {/* Spreadsheet Modal */}
       {selectedDataset && (
         <Spreadsheet
-          open={!!selectedDataset}
+          open={!!selectedDataset.table_name || selectedDataset.mode === "create"}
           onClose={() => setSelectedDataset(null)}
-          mode={selectedDataset.mode || "create"} // default to create
-          existingDatasetName={selectedDataset.name} // used by the API in edit mode
-          initialData={selectedDataset.data ?? null}
+          mode={selectedDataset.mode || "create"}
+          existingDatasetId={selectedDataset.id}
+          initialData={selectedDataset.data}
         />
       )}
     </div>

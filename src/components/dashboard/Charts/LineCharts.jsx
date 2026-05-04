@@ -19,8 +19,10 @@ import useDateRangeFilter from "../../../hooks/useDateRangeFilter";
 
 export function GenerateLineChart({ jsonData, persistenceScope, onExport }) {
   const result = buildTimeSeries(jsonData);
-  // print data to frontend console for debugging
-  console.log("Chart data:", result);
+  if (result.error) {
+    // Display error to user
+    console.error(result.error);
+  }
   const [lineColor, setLineColor] = usePersistentState(
     `${persistenceScope}:color`,
     "#3b82f6",

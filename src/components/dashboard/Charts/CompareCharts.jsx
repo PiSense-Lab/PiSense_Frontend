@@ -20,7 +20,11 @@ import useDateRangeFilter from "../../../hooks/useDateRangeFilter";
 
 export function GenerateCompareChart({ jsonData, persistenceScope, onExport }) {
   const result = buildTimeSeries(jsonData);
-  console.log("Compare Chart data:", result);
+  if (result.error) {
+    // Display error to user
+    console.error(result.error);
+  }
+ 
 
   const metricKeys = useMemo(
     () => result?.metricKeys || [],

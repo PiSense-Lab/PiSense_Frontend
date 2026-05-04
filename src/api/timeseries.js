@@ -4,6 +4,9 @@ import BASE_URL from "./base_url";
 const normalize = (n) => Math.round(n * 100) / 100; // ~1km precision
 
 const WEATHER_CACHE_KEY = "weatherDailyCache";
+const tableCache = new Map();
+
+const getTableCacheKey = (tableName, projectId) => `${projectId}:${tableName}`;
 
 const decodeJwtPayload = (token) => {
   if (!token) return null;
@@ -64,34 +67,34 @@ const buildWeatherDatasets = (
 ) => [
   {
     id: "weather_forecast_hourly",
-    name: "Hourly Weather Forecast",
+    table_name: "Hourly Weather Forecast",
     description: "7-day hourly weather forecast based on your location.",
-    type: "forecast",
-    frequency: "hourly",
+    row_count: forecastHourly.hourly.length,
+    column_count: forecastHourly.hourly[0] ? Object.keys(forecastHourly.hourly[0]).length : 0,
     data: forecastHourly,
   },
   {
     id: "weather_forecast_daily",
-    name: "Daily Weather Forecast",
+    table_name: "Daily Weather Forecast",
     description: "7-day daily weather forecast based on your location.",
-    type: "forecast",
-    frequency: "daily",
+    row_count: forecastDaily.daily.length,
+    column_count: forecastDaily.daily[0] ? Object.keys(forecastDaily.daily[0]).length : 0,
     data: forecastDaily,
   },
   {
     id: "weather_historical_hourly",
-    name: "Hourly Historical Weather",
+    table_name: "Hourly Historical Weather",
     description: "Hourly historical weather data for the past year.",
-    type: "historical",
-    frequency: "hourly",
+    row_count: historicalHourly.hourly.length,
+    column_count: historicalHourly.hourly[0] ? Object.keys(historicalHourly.hourly[0]).length : 0,
     data: historicalHourly,
   },
   {
     id: "weather_historical_daily",
-    name: "Daily Historical Weather",
+    table_name: "Daily Historical Weather",
     description: "Daily historical weather data for the past year.",
-    type: "historical",
-    frequency: "daily",
+    row_count: historicalDaily.daily.length,
+    column_count: historicalDaily.daily[0] ? Object.keys(historicalDaily.daily[0]).length : 0,
     data: historicalDaily,
   },
 ];
@@ -107,6 +110,8 @@ export const uploadData = async (
   projectId = 1,
 ) => {
   try {
+    userId = getStoredUserIdentity().userId;
+    projectId = localStorage.getItem("projectid");
     const formData = new FormData();
     formData.append("file", file);
 
@@ -152,11 +157,12 @@ export const uploadData = async (
 // - datasetName: string — user-provided name for the dataset
 // - datasetType: string — category e.g. "weather", "sensor", "custom label"
 // - rows: array of objects — each object is a row keyed by column name
-export const submitManualData = async ({ datasetName, rows }) => {
+export const submitManualData = async ({ datasetName, rows, projectId = 1 }) => {
   try {
     const params = new URLSearchParams({
       table_name: datasetName,
       json_in: JSON.stringify(rows),
+      project_id: projectId,
     });
 
     const response = await fetch(
@@ -179,28 +185,63 @@ export const submitManualData = async ({ datasetName, rows }) => {
   }
 };
 
+export const bulkEditData = async (datasetId, changes, rows) => {
+
+}
+
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
-  const isWeatherProject =
-    String(projectId) === "weather-1" || String(projectId) === "1";
+  const cacheKey = getTableCacheKey(tableName, projectId);
+  if (tableCache.has(cacheKey)) {
+    return tableCache.get(cacheKey);
+  }
+
+  const isWeatherProject = String(projectId) === "weather-1";
 
   if (isWeatherProject) {
     const cache = getWeatherCache();
     if (cache && isSameCacheDay(cache.date) && Array.isArray(cache.data)) {
-      return cache.data.find((d) => d.name === tableName)?.data || null;
+      const data = cache.data.find((d) => d.table_name === tableName)?.data || null;
+      if (data !== null) tableCache.set(cacheKey, data);
+      return data;
     }
 
     const weatherData = await ensureDailyWeatherCache();
-    return weatherData.find((d) => d.name === tableName)?.data || null;
+    const data = weatherData.find((d) => d.table_name === tableName)?.data || null;
+    if (data !== null) tableCache.set(cacheKey, data);
+    return data;
   }
 
   try {
-    const response = await fetch(`${BASE_URL}/datatables/${tableName}`);
+    const params = new URLSearchParams({
+      table_name: tableName,
+      project_id: projectId,
+    });
+    const response = await fetch(`${BASE_URL}/datatables/get_table?${params}`);
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
     const json = await response.json();
-    return json.data;
+
+    const extractTableData = (payload) => {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== "object") return null;
+      if (Array.isArray(payload[tableName])) return payload[tableName];
+      if (Array.isArray(payload.data)) return payload.data;
+      if (payload.data && typeof payload.data === "object") {
+        if (Array.isArray(payload.data[tableName])) return payload.data[tableName];
+      }
+
+      for (const value of Object.values(payload)) {
+        if (Array.isArray(value)) return value;
+      }
+
+      return null;
+    };
+
+    const data = extractTableData(json);
+    if (data !== null) tableCache.set(cacheKey, data);
+    return data;
   } catch (error) {
     console.error("Error fetching table:", error);
     return null;
@@ -214,7 +255,7 @@ export const getTables = async (projectId = 1) => {
       throw new Error(`Server responded with status ${response.status}`);
     }
     const json = await response.json();
-    return json.data;
+    return json;
   } catch (error) {
     console.error("Error fetching table:", error);
     return null;
@@ -224,11 +265,11 @@ export const getTables = async (projectId = 1) => {
 
 // src/api/projects.js
 
-export const getProjects = async ({ userId = null, username = null, name = null } = {}) => {
+export const getProjects = async ({ userId = null, name = null } = {}) => {
   const weatherProject = {
-    project_id: "weather-1",
-    project_name: "Weather",
-    last_update: new Date().toISOString().split("T")[0],
+    id: "weather-1",
+    name: "Weather",
+    last_updated: new Date().toISOString().split("T")[0],
     total_datasets: 4,
     anomalies: 0,
   };
@@ -247,6 +288,7 @@ export const getProjects = async ({ userId = null, username = null, name = null 
       const response = await fetch(`${BASE_URL}/users/get_user_projects?user_id=${userId}`);
       if (response.ok) {
         const data = await response.json();
+        projects.push(...data.data);
         const userProjects = Array.isArray(data)
           ? data
           : Array.isArray(data.projects)
@@ -255,8 +297,8 @@ export const getProjects = async ({ userId = null, username = null, name = null 
 
         const filteredUserProjects = userProjects.filter(
           (project) =>
-            project.project_name !== weatherProject.project_name &&
-            String(project.project_id) !== String(weatherProject.project_id),
+            project.name !== weatherProject.name &&
+            String(project.id) !== String(weatherProject.id),
         );
 
         projects.push(...filteredUserProjects);
@@ -269,12 +311,6 @@ export const getProjects = async ({ userId = null, username = null, name = null 
     } catch (error) {
       console.error("Error fetching user-specific projects:", error);
     }
-  }
-
-  if (name) {
-    return projects.filter((p) =>
-      p.project_name.toLowerCase().includes(name.toLowerCase()),
-    );
   }
 
   return projects;
@@ -356,6 +392,13 @@ const fetchWeatherDatasetBundle = async () => {
     }),
   ]);
 
+  console.log("Fetched weather data:", {
+    forecastHourly,
+    forecastDaily,
+    historicalHourly,
+    historicalDaily,
+  });
+
   return buildWeatherDatasets(
     forecastHourly,
     forecastDaily,
@@ -382,49 +425,86 @@ export const ensureDailyWeatherCache = async () => {
  * Fetch datasets associated with a project.
  */
 export const getDatasetsForProject = async (projectId) => {
-  // Only handle the Weather project (ID: "weather-1" or "1")
+  // Only handle the Weather project (ID: "weather-1")
+  console.log("Fetching datasets for project ID:", projectId);
   const isWeatherProject =
     String(projectId) === "weather-1";
+
 
   if (!isWeatherProject) {
     // For non-weather projects, fetch datasets from backend = http://192.168.1.90:8000/datatables/?project_id=3
     try {
-      const params = new URLSearchParams({ project_id: projectId });
-      const response = await fetch(`${BASE_URL}/datatables?${params}`);
+      // const params = new URLSearchParams({ project_id: projectId });
+      const response = await fetch(`${BASE_URL}/datatables?project_id=${projectId}`);
       if (!response.ok) {
         throw new Error(`Server responded with status ${response.status}`);
       }
       const json = await response.json();
-      return Array.isArray(json.data) ? json.data : [];
+
+      return Array.isArray(json) ? json : [];
     } catch (error) {
       console.error("Error fetching datasets for project:", error);
       return [];
     }
 
   }
-
+  // get data from weather cache (or fetch if not present/expired) and return in expected format
+  const weatherData = await ensureDailyWeatherCache();
+  console.log("Weather datasets for project:", weatherData);
+  
   // Return datasets formatted for UI consumption
-  return [
-      {
-        id: "weather_forecast_hourly",
-        name: "Hourly Weather Forecast",
-      },
-      {
-        id: "weather_forecast_daily",
-        name: "Daily Weather Forecast",
-        
-      },
-      {
-        id: "weather_historical_hourly",
-        name: "Hourly Historical Weather",
-      },
-      {
-        id: "weather_historical_daily",
-        name: "Daily Historical Weather",
-      },
+  return [  
+          {
+          "table_name": "Hourly Weather Forecast",
+          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+          "row_count": weatherData.find(d => d.id === "weather_forecast_hourly")?.data?.length || 0,
+          "column_count": weatherData.find(d => d.id === "weather_forecast_hourly")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_forecast_hourly").data[0]) : []
+        },   
+        {
+          "table_name": "Daily Weather Forecast",
+          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+          "row_count": weatherData.find(d => d.id === "weather_forecast_daily")?.data?.length || 0,
+          "column_count": weatherData.find(d => d.id === "weather_forecast_daily")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_forecast_daily").data[0]) : []
+        },  
+        {
+          "table_name": "Hourly Historical Weather",
+          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+          "row_count": weatherData.find(d => d.id === "weather_historical_hourly")?.data?.length || 0,
+          "column_count": weatherData.find(d => d.id === "weather_historical_hourly")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_historical_hourly").data[0]) : []
+        },  
+        {
+          "table_name": "Daily Historical Weather",
+          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+          "row_count": weatherData.find(d => d.id === "weather_historical_daily")?.data?.length || 0,
+          "column_count": weatherData.find(d => d.id === "weather_historical_daily")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_historical_daily").data[0]) : []
+        }
     ];
  
 };
   
+export const createProject = async (projectName, userId, description, public_val = false, archived = false) => {
+  try {
+    const params = new URLSearchParams({
+      name: projectName,
+      owner_id: userId,
+      description: description,
+      public: public_val, // boolean
+      archived: archived, // boolean
+    });
+
+    const response = await fetch(`${BASE_URL}/projects/create_project?${params}`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating project:", error);
+    return { success: false, message: error.message };
+  }
+};
 
 

@@ -57,6 +57,7 @@ export function GenerateLineChart({ jsonData, persistenceScope, onExport }) {
     maxValue,
     invalidRange,
     filteredData,
+    dataRangeSpan,
     onRangeChange,
     onStartChange,
     onEndChange,
@@ -160,6 +161,7 @@ export function GenerateLineChart({ jsonData, persistenceScope, onExport }) {
           minValue={minValue}
           maxValue={maxValue}
           invalidRange={invalidRange}
+          dataRangeSpan={dataRangeSpan}
           onStartChange={onStartChange}
           onEndChange={onEndChange}
           onRangeChange={onRangeChange}

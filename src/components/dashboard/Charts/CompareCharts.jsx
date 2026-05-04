@@ -24,7 +24,6 @@ export function GenerateCompareChart({ jsonData, persistenceScope, onExport }) {
     // Display error to user
     console.error(result.error);
   }
- 
 
   const metricKeys = useMemo(
     () => result?.metricKeys || [],
@@ -77,6 +76,7 @@ export function GenerateCompareChart({ jsonData, persistenceScope, onExport }) {
     maxValue,
     invalidRange,
     filteredData,
+    dataRangeSpan,
     onRangeChange,
     onStartChange,
     onEndChange,
@@ -243,6 +243,7 @@ export function GenerateCompareChart({ jsonData, persistenceScope, onExport }) {
           minValue={minValue}
           maxValue={maxValue}
           invalidRange={invalidRange}
+          dataRangeSpan={dataRangeSpan}
           onStartChange={onStartChange}
           onEndChange={onEndChange}
           onRangeChange={onRangeChange}

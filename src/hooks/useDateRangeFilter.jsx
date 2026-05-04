@@ -105,6 +105,17 @@ export default function useDateRangeFilter({
     });
   }, [data, timeKey, startMs, endMs, invalidRange]);
 
+  const dataRangeSpan = useMemo(() => {
+    if (!bounds) return "";
+    const spanMs = bounds.maxMs - bounds.minMs;
+    const days = Math.ceil(spanMs / (24 * 60 * 60 * 1000));
+    if (days === 1) return "1 day";
+    if (days < 30) return `${days} days`;
+    const months = Math.round(days / 30);
+    if (months === 1) return "1 month";
+    return `${months} months`;
+  }, [bounds]);
+
   const handleRangeChange = (range) => {
     setActiveRange(range);
 
@@ -132,6 +143,7 @@ export default function useDateRangeFilter({
     maxValue: bounds ? toDateTimeLocal(bounds.maxMs) : "",
     invalidRange,
     filteredData,
+    dataRangeSpan,
     onRangeChange: handleRangeChange,
     onStartChange: handleStartChange,
     onEndChange: handleEndChange,

@@ -13,6 +13,7 @@ export function DateRangeFilterPanel({
   minValue,
   maxValue,
   invalidRange,
+  dataRangeSpan,
   onStartChange,
   onEndChange,
   onRangeChange,
@@ -87,6 +88,12 @@ export function DateRangeFilterPanel({
       {invalidRange && (
         <p className="mt-2 w-full text-xs font-medium text-rose-600 dark:text-rose-300">
           Start date must be before end date.
+        </p>
+      )}
+
+      {dataRangeSpan && (
+        <p className="text-sm text-slate-700 dark:text-slate-200">
+          Available data: {dataRangeSpan}
         </p>
       )}
     </div>

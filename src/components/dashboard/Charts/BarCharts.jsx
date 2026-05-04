@@ -56,6 +56,7 @@ export function GenerateBarChart({ jsonData, persistenceScope, onExport }) {
     maxValue,
     invalidRange,
     filteredData,
+    dataRangeSpan,
     onRangeChange,
     onStartChange,
     onEndChange,
@@ -160,6 +161,7 @@ export function GenerateBarChart({ jsonData, persistenceScope, onExport }) {
           minValue={minValue}
           maxValue={maxValue}
           invalidRange={invalidRange}
+          dataRangeSpan={dataRangeSpan}
           onStartChange={onStartChange}
           onEndChange={onEndChange}
           onRangeChange={onRangeChange}

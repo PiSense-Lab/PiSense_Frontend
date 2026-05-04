@@ -4,6 +4,9 @@ import BASE_URL from "./base_url";
 const normalize = (n) => Math.round(n * 100) / 100; // ~1km precision
 
 const WEATHER_CACHE_KEY = "weatherDailyCache";
+const tableCache = new Map();
+
+const getTableCacheKey = (tableName, projectId) => `${projectId}:${tableName}`;
 
 const decodeJwtPayload = (token) => {
   if (!token) return null;
@@ -66,32 +69,32 @@ const buildWeatherDatasets = (
       id: "weather_forecast_hourly",
       table_name: "Hourly Weather Forecast",
       description: "7-day hourly weather forecast based on your location.",
-      row_count: forecastHourly.length,
-      column_count: forecastHourly[0] ? Object.keys(forecastHourly[0]).length : 0,
+      row_count: forecastHourly.hourly.length,
+      column_count: forecastHourly.hourly[0] ? Object.keys(forecastHourly.hourly[0]).length : 0,
       data: forecastHourly,
     },
     {
       id: "weather_forecast_daily",
       table_name: "Daily Weather Forecast",
       description: "7-day daily weather forecast based on your location.",
-      row_count: forecastDaily.length,
-      column_count: forecastDaily[0] ? Object.keys(forecastDaily[0]).length : 0,
+      row_count: forecastDaily.daily.length,
+      column_count: forecastDaily.daily[0] ? Object.keys(forecastDaily.daily[0]).length : 0,
       data: forecastDaily,
     },
     {
       id: "weather_historical_hourly",
       table_name: "Hourly Historical Weather",
       description: "Hourly historical weather data for the past year.",
-      row_count: historicalHourly.length,
-      column_count: historicalHourly[0] ? Object.keys(historicalHourly[0]).length : 0,
+      row_count: historicalHourly.hourly.length,
+      column_count: historicalHourly.hourly[0] ? Object.keys(historicalHourly.hourly[0]).length : 0,
       data: historicalHourly,
     },
     {
       id: "weather_historical_daily",
       table_name: "Daily Historical Weather",
       description: "Daily historical weather data for the past year.",
-      row_count: historicalDaily.length,
-      column_count: historicalDaily[0] ? Object.keys(historicalDaily[0]).length : 0,
+      row_count: historicalDaily.daily.length,
+      column_count: historicalDaily.daily[0] ? Object.keys(historicalDaily.daily[0]).length : 0,
       data: historicalDaily,
     },
   ];
@@ -107,6 +110,8 @@ export const uploadData = async (
   projectId = 1,
 ) => {
   try {
+    userId = getStoredUserIdentity().userId;
+    projectId = localStorage.getItem("projectid");
     const formData = new FormData();
     formData.append("file", file);
 
@@ -289,17 +294,25 @@ export const editTable = async ({ datasetId, changes, rows }) => {
 
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
-  const isWeatherProject =
-    String(projectId) === "weather-1";
+  const cacheKey = getTableCacheKey(tableName, projectId);
+  if (tableCache.has(cacheKey)) {
+    return tableCache.get(cacheKey);
+  }
+
+  const isWeatherProject = String(projectId) === "weather-1";
 
   if (isWeatherProject) {
     const cache = getWeatherCache();
     if (cache && isSameCacheDay(cache.date) && Array.isArray(cache.data)) {
-      return cache.data.find((d) => d.table_name === tableName)?.data || null;
+      const data = cache.data.find((d) => d.table_name === tableName)?.data || null;
+      if (data !== null) tableCache.set(cacheKey, data);
+      return data;
     }
 
     const weatherData = await ensureDailyWeatherCache();
-    return weatherData.find((d) => d.table_name === tableName)?.data || null;
+    const data = weatherData.find((d) => d.table_name === tableName)?.data || null;
+    if (data !== null) tableCache.set(cacheKey, data);
+    return data;
   }
 
   try {
@@ -307,9 +320,7 @@ export const getTable = async (tableName, projectId) => {
       table_name: tableName,
       project_id: projectId,
     });
-    const response = await fetch(
-      `${BASE_URL}/datatables/get_table?${params}`,
-    );
+    const response = await fetch(`${BASE_URL}/datatables/get_table?${params}`);
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
@@ -331,7 +342,9 @@ export const getTable = async (tableName, projectId) => {
       return null;
     };
 
-    return extractTableData(json);
+    const data = extractTableData(json);
+    if (data !== null) tableCache.set(cacheKey, data);
+    return data;
   } catch (error) {
     console.error("Error fetching table:", error);
     return null;
@@ -359,7 +372,7 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
   const weatherProject = {
     id: "weather-1",
     name: "Weather",
-    last_update: new Date().toISOString().split("T")[0],
+    last_updated: new Date().toISOString().split("T")[0],
     total_datasets: 4,
     anomalies: 0,
   };
@@ -482,6 +495,13 @@ const fetchWeatherDatasetBundle = async () => {
     }),
   ]);
 
+  console.log("Fetched weather data:", {
+    forecastHourly,
+    forecastDaily,
+    historicalHourly,
+    historicalDaily,
+  });
+
   return buildWeatherDatasets(
     forecastHourly,
     forecastDaily,
@@ -533,6 +553,7 @@ export const getDatasetsForProject = async (projectId) => {
   }
   // get data from weather cache (or fetch if not present/expired) and return in expected format
   const weatherData = await ensureDailyWeatherCache();
+  console.log("Weather datasets for project:", weatherData);
 
   // Return datasets formatted for UI consumption
   return [
@@ -564,5 +585,29 @@ export const getDatasetsForProject = async (projectId) => {
 
 };
 
+export const createProject = async (projectName, userId, description, public_val = false, archived = false) => {
+  try {
+    const params = new URLSearchParams({
+      name: projectName,
+      owner_id: userId,
+      description: description,
+      public: public_val, // boolean
+      archived: archived, // boolean
+    });
+
+    const response = await fetch(`${BASE_URL}/projects/create_project?${params}`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating project:", error);
+    return { success: false, message: error.message };
+  }
+};
 
 

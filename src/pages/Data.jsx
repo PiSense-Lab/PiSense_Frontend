@@ -24,6 +24,7 @@ const Data = () => {
           const cachedRaw = localStorage.getItem("weatherDailyCache");
           const cachedData = cachedRaw ? JSON.parse(cachedRaw) : null;
           const datasets = Array.isArray(cachedData?.data) ? cachedData.data : [];
+          console.log("Cached weather datasets:", datasets.length);
 
           if (datasets.length > 0) {
             setDatasetsMeta(datasets);
@@ -31,10 +32,11 @@ const Data = () => {
             return;
           }
 
-          const projectDatasets = await getDatasetsForProject(projectid);
-          setDatasetsMeta(projectDatasets);
-          setLoading(false);
-          return;
+          // const projectDatasets = await getDatasetsForProject(projectid);
+          // console.log("Fetched weather datasets from API:", projectDatasets);
+          // setDatasetsMeta(projectDatasets);
+          // setLoading(false);
+          // return;
         }
         const data = await getDatasetsForProject(projectid);
         if (data) {

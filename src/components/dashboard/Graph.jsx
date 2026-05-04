@@ -2,7 +2,6 @@ import React, { useRef } from "react";
  import { toPng } from "html-to-image";
 import ChartPage from "./ChartPage";
 import { ChartTitleEditor } from "./Charts/chart-support/ChartTitleEditor";
-import { ExportGraphButton } from "./Charts/chart-support/ExportGraphButton";
 import { GraphTypeSwitcher } from "./Charts/chart-support/GraphTypeSwitcher";
 import usePersistentState from "../../hooks/usePersistentState";
 
@@ -65,11 +64,8 @@ const Graph = ({ projectId, dataset }) => {
           projectId={projectId}
           chartType={chartType}
           persistenceScope={scope}
+          onExport={handleExportChart}
         />
-      </div>
-
-      <div className="mt-3 flex justify-end">
-        <ExportGraphButton onClick={handleExportChart} />
       </div>
     </div>
   );

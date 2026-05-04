@@ -181,6 +181,7 @@ export const submitManualData = async ({ datasetName, rows, projectId = 1 }) => 
 };
 
 export const editTable = async ({ datasetId, changes, rows }) => {
+  console.log("editTable called with:", { datasetId, changes, rows });
   try {
     const formattedChanges = [];
 
@@ -238,7 +239,7 @@ export const editTable = async ({ datasetId, changes, rows }) => {
           type: "add_column",
           table_name: datasetId,
           column_name: [c.name],
-          column_type: ["VARCHAR(255)"], // default type — adjust if you collect this
+          column_type: ["VARCHAR(50)"], // default type — adjust if you collect this
         });
       });
 
@@ -265,7 +266,9 @@ export const editTable = async ({ datasetId, changes, rows }) => {
         });
       });
 
-    const response = await fetch(`${BASE_URL}/datatables/edit_table`, {
+
+    console.log("Payload:", JSON.stringify(formattedChanges, null, 2));
+    const response = await fetch(`${BASE_URL}/datatables/edit_table?table_name=${encodeURIComponent(datasetId)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formattedChanges),
@@ -273,6 +276,7 @@ export const editTable = async ({ datasetId, changes, rows }) => {
 
     if (!response.ok) {
       const err = await response.json();
+      console.error("422 detail:", err); // log the whole object, not just err.detail
       return { success: false, message: err.detail || "Unknown error" };
     }
 

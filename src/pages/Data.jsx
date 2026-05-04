@@ -188,7 +188,7 @@ const Data = () => {
           open={!!selectedDataset.table_name || selectedDataset.mode === "create"}
           onClose={() => setSelectedDataset(null)}
           mode={selectedDataset.mode || "create"}
-          existingDatasetId={selectedDataset.id}
+          existingDatasetId={selectedDataset.table_name} // ← was selectedDataset.id
           initialData={selectedDataset.data}
         />
       )}

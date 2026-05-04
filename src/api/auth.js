@@ -105,9 +105,15 @@ export async function createUser(
     });
 
     const data = await response.json();
-    console.log(data);
 
     if (!response.ok) {
+      console.error("Create user failed:", data); // only logs on failure
+      if (response.status === 403) {
+        if (data.detail === "Email is not unique") {
+          return { success: false, error: "An account with that email already exists. Try logging in instead!" };
+        }
+        return { success: false, error: "That username is taken. Try adding a number to make it unique!" };
+      }
       return {
         success: false,
         error: Array.isArray(data.detail)
@@ -116,10 +122,7 @@ export async function createUser(
       };
     }
 
-    return {
-      success: true,
-      data,
-    };
+    return { success: true, data };
   } catch (error) {
     console.error(error);
     return {

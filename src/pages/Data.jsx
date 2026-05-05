@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import Spreadsheet from "../components/Spreadsheet";
 import { RxTrash, RxDownload } from "react-icons/rx";
 import RoundButton from "../components/RoundButton";
-import { getTable, getDatasetsForProject } from "../api/timeseries";
+import { getTable, getDatasetsForProject, deleteTable } from "../api/timeseries";
 
 const Data = () => {
   const { activeProject } = useOutletContext();
@@ -58,11 +58,6 @@ const Data = () => {
 
   const handleViewDataset = async (dataset) => {
     if (dataset.mode === "edit") {
-      if (dataset.data) {
-        setSelectedDataset({ ...dataset, data: dataset.data });
-        return;
-      }
-
       const projectid = activeProject?.id;
       const result = await getTable(dataset.table_name, projectid);
 
@@ -70,12 +65,28 @@ const Data = () => {
         console.error("Failed to load dataset");
         return;
       }
+
       console.log("Fetched dataset data:", result);
       setSelectedDataset({ ...dataset, data: result });
     } else {
       console.log("Creating new dataset");
       setSelectedDataset(dataset);
     }
+  };
+
+  const handleDeleteDataset = async (dataset) => {
+    const confirmed = window.confirm(`Delete "${dataset.table_name}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    const projectid = activeProject?.id;
+    const result = await deleteTable({ tableName: dataset.table_name, projectId: projectid });
+
+    if (!result?.success) {
+      console.error("Failed to delete:", result?.message);
+      return;
+    }
+
+    setDatasetsMeta((prev) => prev.filter((ds) => ds.table_name !== dataset.table_name));
   };
 
   return (
@@ -170,7 +181,10 @@ const Data = () => {
                           <button className="text-slate-400 hover:text-sky p-1">
                             <RxDownload size={18} />
                           </button>
-                          <button className="text-slate-400 hover:text-red-500 p-1">
+                          <button className="text-slate-400 hover:text-red-500 p-1"
+                            onClick={() =>
+                              handleDeleteDataset({ ...ds })
+                            }>
                             <RxTrash size={18} />
                           </button>
                         </div>
@@ -192,6 +206,17 @@ const Data = () => {
           mode={selectedDataset.mode || "create"}
           existingDatasetId={selectedDataset.table_name} // ← was selectedDataset.id
           initialData={selectedDataset.data}
+          onSuccess={(updatedDataset) => {
+            setDatasetsMeta((prev) => {
+              const exists = prev.some((ds) => ds.table_name === updatedDataset.table_name);
+              if (exists) {
+                return prev.map((ds) =>
+                  ds.table_name === updatedDataset.table_name ? { ...ds, ...updatedDataset } : ds
+                );
+              }
+              return [...prev, updatedDataset];
+            });
+          }}
         />
       )}
     </div>

@@ -187,6 +187,14 @@ export const submitManualData = async ({ datasetName, rows, projectId = 1 }) => 
 
 export const editTable = async ({ datasetId, changes, rows }) => {
   console.log("editTable called with:", { datasetId, changes, rows });
+  const ORDER = {
+    add_column: 0,
+    rename_column: 1,
+    delete_column: 2,
+    edit_row: 3,
+    insert_rows: 4,
+    delete_row: 5,
+  };
   try {
     const formattedChanges = [];
 
@@ -201,38 +209,42 @@ export const editTable = async ({ datasetId, changes, rows }) => {
 
     // cell_edit → "edit_row"
     Object.entries(rowEdits).forEach(([rowId, cellChanges]) => {
-      const rowIndex = rows.findIndex((r) => r.id === rowId);
-      if (rowIndex === -1) return;
+      const row = rows.find((r) => r.id === rowId);
+      if (!row) return;
 
       formattedChanges.push({
         type: "edit_row",
         table_name: datasetId,
-        row_num: rowIndex + 1, // 1-indexed
+        row_num: row.dbRowNum, // ← use this instead of rowIndex + 1
         row_data: Object.values(cellChanges),
         row_columns: Object.keys(cellChanges),
       });
     });
 
+    const INDEX_COL = "id"; // or whatever your column is named
+
     changes
       .filter((c) => c.type === "row_insert")
       .forEach((c) => {
+        const rowData = { ...c.rowData };
+        delete rowData[INDEX_COL]; // don't send auto-increment col
+
         formattedChanges.push({
           type: "insert_rows",
           table_name: datasetId,
-          column_name: Object.keys(c.rowData),
-          rows: [Object.values(c.rowData)],
+          column_name: Object.keys(rowData),
+          rows: [Object.values(rowData)],
         });
       });
 
     changes
       .filter((c) => c.type === "row_delete")
       .forEach((c) => {
-        const rowIndex = rows.findIndex((r) => r.id === c.rowId);
-        if (rowIndex === -1) return;
+        if (!c.dbRowNum) return; // skip new rows that were never saved
         formattedChanges.push({
           type: "delete_row",
           table_name: datasetId,
-          row_num: rowIndex + 1,
+          row_num: c.dbRowNum,
         });
       });
 
@@ -271,12 +283,14 @@ export const editTable = async ({ datasetId, changes, rows }) => {
         });
       });
 
-
-    console.log(JSON.stringify(formattedChanges, null, 2));
+    const sortedChanges = [...formattedChanges].sort(
+      (a, b) => (ORDER[a.type] ?? 99) - (ORDER[b.type] ?? 99)
+    );
+    console.log(JSON.stringify(sortedChanges, null, 2));
     const response = await fetch(`${BASE_URL}/datatables/edit_table?table_name=${encodeURIComponent(datasetId)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formattedChanges),
+      body: JSON.stringify(sortedChanges),
     });
 
     if (!response.ok) {
@@ -285,9 +299,34 @@ export const editTable = async ({ datasetId, changes, rows }) => {
       return { success: false, message: err.detail || "Unknown error" };
     }
 
+    const cacheKey = getTableCacheKey(datasetId, localStorage.getItem("projectid"));
+    tableCache.delete(cacheKey);
+
     return { success: true };
   } catch (error) {
     console.error("Error editing table:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+export const deleteTable = async ({ tableName, projectId }) => {
+  try {
+    const params = new URLSearchParams({
+      table_name: tableName,
+      project_id: projectId,
+    });
+    const response = await fetch(`${BASE_URL}/datatables/delete_table?${params}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      return { success: false, message: err.detail || "Unknown error" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting table:", error);
     return { success: false, message: error.message };
   }
 };

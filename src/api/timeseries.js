@@ -65,39 +65,39 @@ const buildWeatherDatasets = (
   historicalHourly,
   historicalDaily,
 ) => [
-  {
-    id: "weather_forecast_hourly",
-    table_name: "Hourly Weather Forecast",
-    description: "7-day hourly weather forecast based on your location.",
-    row_count: forecastHourly.hourly.length,
-    column_count: forecastHourly.hourly[0] ? Object.keys(forecastHourly.hourly[0]).length : 0,
-    data: forecastHourly,
-  },
-  {
-    id: "weather_forecast_daily",
-    table_name: "Daily Weather Forecast",
-    description: "7-day daily weather forecast based on your location.",
-    row_count: forecastDaily.daily.length,
-    column_count: forecastDaily.daily[0] ? Object.keys(forecastDaily.daily[0]).length : 0,
-    data: forecastDaily,
-  },
-  {
-    id: "weather_historical_hourly",
-    table_name: "Hourly Historical Weather",
-    description: "Hourly historical weather data for the past year.",
-    row_count: historicalHourly.hourly.length,
-    column_count: historicalHourly.hourly[0] ? Object.keys(historicalHourly.hourly[0]).length : 0,
-    data: historicalHourly,
-  },
-  {
-    id: "weather_historical_daily",
-    table_name: "Daily Historical Weather",
-    description: "Daily historical weather data for the past year.",
-    row_count: historicalDaily.daily.length,
-    column_count: historicalDaily.daily[0] ? Object.keys(historicalDaily.daily[0]).length : 0,
-    data: historicalDaily,
-  },
-];
+    {
+      id: "weather_forecast_hourly",
+      table_name: "Hourly Weather Forecast",
+      description: "7-day hourly weather forecast based on your location.",
+      row_count: forecastHourly.hourly.length,
+      column_count: forecastHourly.hourly[0] ? Object.keys(forecastHourly.hourly[0]).length : 0,
+      data: forecastHourly,
+    },
+    {
+      id: "weather_forecast_daily",
+      table_name: "Daily Weather Forecast",
+      description: "7-day daily weather forecast based on your location.",
+      row_count: forecastDaily.daily.length,
+      column_count: forecastDaily.daily[0] ? Object.keys(forecastDaily.daily[0]).length : 0,
+      data: forecastDaily,
+    },
+    {
+      id: "weather_historical_hourly",
+      table_name: "Hourly Historical Weather",
+      description: "Hourly historical weather data for the past year.",
+      row_count: historicalHourly.hourly.length,
+      column_count: historicalHourly.hourly[0] ? Object.keys(historicalHourly.hourly[0]).length : 0,
+      data: historicalHourly,
+    },
+    {
+      id: "weather_historical_daily",
+      table_name: "Daily Historical Weather",
+      description: "Daily historical weather data for the past year.",
+      row_count: historicalDaily.daily.length,
+      column_count: historicalDaily.daily[0] ? Object.keys(historicalDaily.daily[0]).length : 0,
+      data: historicalDaily,
+    },
+  ];
 
 // import { fetchWeatherData } from "./indexedbdhelper";
 
@@ -185,9 +185,153 @@ export const submitManualData = async ({ datasetName, rows, projectId = 1 }) => 
   }
 };
 
-export const bulkEditData = async (datasetId, changes, rows) => {
+export const editTable = async ({ datasetId, changes, rows }) => {
+  console.log("editTable called with:", { datasetId, changes, rows });
+  const ORDER = {
+    add_column: 0,
+    rename_column: 1,
+    edit_row: 2,
+    insert_rows: 3,
+    delete_row: 4,
+    delete_column: 5,
+  };
+  try {
+    const formattedChanges = [];
 
-}
+    // Consolidate cell_edits by row first
+    const rowEdits = {};
+    changes
+      .filter((c) => c.type === "cell_edit")
+      .forEach((c) => {
+        if (!rowEdits[c.rowId]) rowEdits[c.rowId] = {};
+        rowEdits[c.rowId][c.colName] = c.value;
+      });
+
+    // cell_edit → "edit_row"
+    Object.entries(rowEdits).forEach(([rowId, cellChanges]) => {
+      const row = rows.find((r) => r.id === rowId);
+      if (!row) return;
+
+      const idValue = row.cells["col-0"]; // or whatever col id maps to "id"
+
+      formattedChanges.push({
+        type: "edit_row",
+        table_name: datasetId,
+        row_num: idValue,           // ← swap row_num for id
+        row_data: Object.values(cellChanges),
+        row_columns: Object.keys(cellChanges),
+      });
+    });
+
+    const INDEX_COL = "id"; // or whatever your column is named
+
+    changes
+      .filter((c) => c.type === "row_insert")
+      .forEach((c) => {
+        const rowData = { ...c.rowData };
+        delete rowData[INDEX_COL]; // don't send auto-increment col
+
+        formattedChanges.push({
+          type: "insert_rows",
+          table_name: datasetId,
+          column_name: Object.keys(rowData),
+          rows: [Object.values(rowData)],
+        });
+      });
+
+    changes
+      .filter((c) => c.type === "row_delete")
+      .forEach((c) => {
+        if (!c.idValue) return; // skip new rows never saved
+        formattedChanges.push({
+          type: "delete_row",
+          table_name: datasetId,
+          row_num: c.idValue,         // ← swap row_num for id
+        });
+      });
+
+    // column_add → "add_column"
+    changes
+      .filter((c) => c.type === "column_add")
+      .forEach((c) => {
+        formattedChanges.push({
+          type: "add_column",
+          table_name: datasetId,
+          column_name: [c.name],
+          column_type: ["VARCHAR(50)"], // default type — adjust if you collect this
+        });
+      });
+
+    // column_rename → "rename_column"
+    changes
+      .filter((c) => c.type === "column_rename")
+      .forEach((c) => {
+        formattedChanges.push({
+          type: "rename_column",
+          table_name: datasetId,
+          old_column_name: c.oldName,
+          new_column_name: c.newName,
+        });
+      });
+
+    // column_delete → "delete_column"
+    changes
+      .filter((c) => c.type === "column_delete")
+      .forEach((c) => {
+        formattedChanges.push({
+          type: "delete_column",
+          table_name: datasetId,
+          column_name: [c.colName],
+        });
+      });
+
+    const sortedChanges = [...formattedChanges].sort(
+      (a, b) => (ORDER[a.type] ?? 99) - (ORDER[b.type] ?? 99)
+    );
+    console.log(JSON.stringify(sortedChanges, null, 2));
+    const response = await fetch(`${BASE_URL}/datatables/edit_table?table_name=${encodeURIComponent(datasetId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sortedChanges),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      console.error("422 detail:", err); // log the whole object, not just err.detail
+      return { success: false, message: err.detail || "Unknown error" };
+    }
+
+    const cacheKey = getTableCacheKey(datasetId, localStorage.getItem("projectid"));
+    tableCache.delete(cacheKey);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error editing table:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+export const deleteTable = async ({ tableName, projectId }) => {
+  try {
+    const params = new URLSearchParams({
+      table_name: tableName,
+      project_id: projectId,
+    });
+    const response = await fetch(`${BASE_URL}/datatables/delete_table?${params}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      return { success: false, message: err.detail || "Unknown error" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting table:", error);
+    return { success: false, message: error.message };
+  }
+};
 
 // Fetch a table from backend
 export const getTable = async (tableName, projectId) => {
@@ -283,7 +427,7 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
     try {
       const params = new URLSearchParams();
       if (userId) params.append("user_id", userId);
-      
+
 
       const response = await fetch(`${BASE_URL}/users/get_user_projects?user_id=${userId}`);
       if (response.ok) {
@@ -292,8 +436,8 @@ export const getProjects = async ({ userId = null, name = null } = {}) => {
         const userProjects = Array.isArray(data)
           ? data
           : Array.isArray(data.projects)
-          ? data.projects
-          : [];
+            ? data.projects
+            : [];
 
         const filteredUserProjects = userProjects.filter(
           (project) =>
@@ -451,37 +595,37 @@ export const getDatasetsForProject = async (projectId) => {
   // get data from weather cache (or fetch if not present/expired) and return in expected format
   const weatherData = await ensureDailyWeatherCache();
   console.log("Weather datasets for project:", weatherData);
-  
+
   // Return datasets formatted for UI consumption
-  return [  
-          {
-          "table_name": "Hourly Weather Forecast",
-          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
-          "row_count": weatherData.find(d => d.id === "weather_forecast_hourly")?.data?.length || 0,
-          "column_count": weatherData.find(d => d.id === "weather_forecast_hourly")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_forecast_hourly").data[0]) : []
-        },   
-        {
-          "table_name": "Daily Weather Forecast",
-          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
-          "row_count": weatherData.find(d => d.id === "weather_forecast_daily")?.data?.length || 0,
-          "column_count": weatherData.find(d => d.id === "weather_forecast_daily")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_forecast_daily").data[0]) : []
-        },  
-        {
-          "table_name": "Hourly Historical Weather",
-          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
-          "row_count": weatherData.find(d => d.id === "weather_historical_hourly")?.data?.length || 0,
-          "column_count": weatherData.find(d => d.id === "weather_historical_hourly")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_historical_hourly").data[0]) : []
-        },  
-        {
-          "table_name": "Daily Historical Weather",
-          "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
-          "row_count": weatherData.find(d => d.id === "weather_historical_daily")?.data?.length || 0,
-          "column_count": weatherData.find(d => d.id === "weather_historical_daily")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_historical_daily").data[0]) : []
-        }
-    ];
- 
+  return [
+    {
+      "table_name": "Hourly Weather Forecast",
+      "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+      "row_count": weatherData.find(d => d.id === "weather_forecast_hourly")?.data?.length || 0,
+      "column_count": weatherData.find(d => d.id === "weather_forecast_hourly")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_forecast_hourly").data[0]) : []
+    },
+    {
+      "table_name": "Daily Weather Forecast",
+      "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+      "row_count": weatherData.find(d => d.id === "weather_forecast_daily")?.data?.length || 0,
+      "column_count": weatherData.find(d => d.id === "weather_forecast_daily")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_forecast_daily").data[0]) : []
+    },
+    {
+      "table_name": "Hourly Historical Weather",
+      "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+      "row_count": weatherData.find(d => d.id === "weather_historical_hourly")?.data?.length || 0,
+      "column_count": weatherData.find(d => d.id === "weather_historical_hourly")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_historical_hourly").data[0]) : []
+    },
+    {
+      "table_name": "Daily Historical Weather",
+      "last_updated": weatherData[0]?.date || new Date().toISOString().split("T")[0],
+      "row_count": weatherData.find(d => d.id === "weather_historical_daily")?.data?.length || 0,
+      "column_count": weatherData.find(d => d.id === "weather_historical_daily")?.data?.[0] ? Object.keys(weatherData.find(d => d.id === "weather_historical_daily").data[0]) : []
+    }
+  ];
+
 };
-  
+
 export const createProject = async (projectName, userId, description, public_val = false, archived = false) => {
   try {
     const params = new URLSearchParams({

@@ -3,7 +3,7 @@ import ReactDom from "react-dom";
 import { RxCross2 } from "react-icons/rx";
 import SubmitModal from "./SubmitModal";
 
-import { submitManualData, bulkEditData } from "../api/timeseries.js";
+import { submitManualData, editTable } from "../api/timeseries.js";
 
 const DEFAULT_COL_WIDTH = 180;
 const ROW_NUM_WIDTH = 52;
@@ -47,7 +47,7 @@ const transformDataToTable = (data) => {
     columns.forEach((col, ci) => {
       cells[col.id] = item[keys[ci]] ?? "";
     });
-    return { id: `row-${ri}`, cells };
+    return { id: `row-${ri}`, dbRowNum: ri + 1, cells }; // ← add dbRowNum
   });
 
   return { columns, rows };
@@ -59,6 +59,7 @@ const Spreadsheet = ({
   mode = "create",
   existingDatasetId = null,
   initialData = null,
+  onSuccess = () => { },
 }) => {
   const [selectedCell, setSelectedCell] = useState(null);
   const [editingHeader, setEditingHeader] = useState(null);
@@ -72,6 +73,8 @@ const Spreadsheet = ({
   //   column_add   — { colId, colName }
   //   column_rename — { colId, oldName, newName }
   //   column_delete — { colId, colName }
+  //   row_delete
+  //   rows_add
   const [changeQueue, setChangeQueue] = useState([]);
 
   const enqueue = (change) =>
@@ -129,12 +132,32 @@ const Spreadsheet = ({
 
     if (mode === "edit") {
       const colName = columns.find((c) => c.id === colId)?.name;
-      setChangeQueue((prev) => {
-        const filtered = prev.filter(
-          (c) => !(c.type === "cell_edit" && c.rowId === rowId && c.colId === colId)
-        );
-        return [...filtered, { type: "cell_edit", rowId, colId, colName, value }];
-      });
+      const isNewRow = changeQueue.some(
+        (c) => c.type === "row_insert" && c.rowId === rowId
+      ) || rowId.startsWith("new-"); // or however you distinguish local vs server rows
+
+      if (isNewRow) {
+        // Accumulate cells into the existing row_insert entry
+        setChangeQueue((prev) => {
+          const existing = prev.find((c) => c.type === "row_insert" && c.rowId === rowId);
+          if (existing) {
+            return prev.map((c) =>
+              c.type === "row_insert" && c.rowId === rowId
+                ? { ...c, rowData: { ...c.rowData, [colName]: value } }
+                : c
+            );
+          }
+          return [...prev, { type: "row_insert", rowId, rowData: { [colName]: value } }];
+        });
+      } else {
+        // existing cell_edit dedup logic
+        setChangeQueue((prev) => {
+          const filtered = prev.filter(
+            (c) => !(c.type === "cell_edit" && c.rowId === rowId && c.colId === colId)
+          );
+          return [...filtered, { type: "cell_edit", rowId, colId, colName, value }];
+        });
+      }
     }
   };
 
@@ -157,26 +180,25 @@ const Spreadsheet = ({
 
   const addColumn = () => {
     const id = `col-${Date.now()}`;
+    const name = `Column${columns.length + 1}`; // use columns from state directly
+
     setTableState((prev) => ({
       ...prev,
-      columns: [
-        ...prev.columns,
-        {
-          id,
-          name: `Column ${prev.columns.length + 1}`,
-          width: DEFAULT_COL_WIDTH,
-        },
-      ],
+      columns: [...prev.columns, { id, name, width: DEFAULT_COL_WIDTH }],
     }));
 
     if (mode === "edit") {
-      enqueue({ type: "column_add", id, name });
+      enqueue({ type: "column_add", id, name }); // now name is defined
     }
   };
 
   const deleteColumn = (colId) => {
+
     if (columns.length <= 1) return;
     const colName = columns.find((c) => c.id === colId)?.name;
+
+    const confirmed = window.confirm(`Delete "${colName}"? This cannot be undone.`);
+    if (!confirmed) return;
 
     setTableState((prev) => ({
       columns: prev.columns.filter((c) => c.id !== colId),
@@ -192,24 +214,44 @@ const Spreadsheet = ({
     }
   };
 
-  const addRows = (count = 10) => {
+  const addRows = (count = 1) => {
+    const newRows = Array.from({ length: count }, (_, i) => ({
+      id: `new-${Date.now()}-${i}`,
+      cells: {},
+    }));
+
     setTableState((prev) => ({
       ...prev,
-      rows: [
-        ...prev.rows,
-        ...Array.from({ length: count }, (_, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          cells: {},
-        })),
-      ],
+      rows: [...prev.rows, ...newRows],
     }));
+
+    if (mode === "edit") {
+      newRows.forEach((r) => enqueue({ type: "row_insert", rowId: r.id, rowData: {} }));
+    }
   };
 
-  const deleteRow = (rowId) =>
+  const deleteRow = (rowId, rowNum) => {
+    if (mode === "edit") {
+      const row = rows.find((r) => r.id === rowId);
+      const confirmed = window.confirm(`Delete row ${rowNum}? This cannot be undone.`);
+      if (!confirmed) return;
+
+      if (row?.dbRowNum) {
+        const idColId = columns.find((c) => c.name === "id")?.id;
+        const idValue = row.cells[idColId];
+        enqueue({ type: "row_delete", rowId, idValue }); // ← store idValue instead of dbRowNum
+      } else {
+        setChangeQueue((prev) => prev.filter(
+          (c) => !(c.type === "row_insert" && c.rowId === rowId)
+        ));
+      }
+    }
+
     setTableState((prev) => ({
       ...prev,
       rows: prev.rows.filter((r) => r.id !== rowId),
     }));
+  };
 
   // ─────────────────────────────────────────────
   // Resize logic
@@ -277,20 +319,36 @@ const Spreadsheet = ({
       }
 
       setStatus("✅ Dataset submitted!");
+      onSuccess({
+        table_name: datasetName,
+        row_count: cleanData.length,
+        column_count: columns.length,
+        last_updated: new Date().toISOString().split("T")[0],
+      });
     } else {
-      const result = await bulkEditData({
+      const result = await editTable({
         datasetId: existingDatasetId,
         changes: changeQueue,
-        rows: cleanData,
+        rows,
       });
 
-      if (result.success === false) {
-        setStatus(`❌ Error: ${result.message}`);
+      console.log("editTable result:", result); // add this
+
+      if (!result || result.success === false) { // guard against undefined
+        setStatus(`❌ Error: ${result?.message || "Unknown error"}`);
         return;
       }
 
       setChangeQueue([]);
       setStatus("✅ Changes saved!");
+      onSuccess({
+        table_name: existingDatasetId,
+        row_count: rows.filter((r) =>
+          Object.values(r.cells).some((v) => v !== "" && v !== undefined)
+        ).length,
+        column_count: columns.length,
+        last_updated: new Date().toISOString().split("T")[0],
+      });
     }
 
     setTimeout(() => {
@@ -334,8 +392,8 @@ const Spreadsheet = ({
 
         {/* Toolbar */}
         <div className="flex items-center gap-2 px-6 py-2 border-b border-slate-200 bg-slate-100 dark:bg-slate-800">
-          <button onClick={() => addRows(10)} className="btn-secondary">
-            + Add Rows
+          <button onClick={() => addRows(1)} className="btn-secondary">
+            + Add Row
           </button>
           <button onClick={addColumn} className="btn-secondary">
             + Add Column
@@ -371,7 +429,7 @@ const Spreadsheet = ({
                     className="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800 group"
                   >
                     <div className="flex items-center h-9 relative">
-                      {editingHeader === col.id ? (
+                      {editingHeader === col.id && col.name !== "id" ? (
                         <input
                           ref={headerInputRef}
                           defaultValue={col.name}
@@ -392,13 +450,14 @@ const Spreadsheet = ({
                           {col.name}
                         </span>
                       )}
-
-                      <button
-                        onClick={() => deleteColumn(col.id)}
-                        className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 text-red-400 rounded hover:bg-red-100 text-xs"
-                      >
-                        <RxCross2 size={18} />
-                      </button>
+                      {col.name !== "id" && (
+                        <button
+                          onClick={() => deleteColumn(col.id)}
+                          className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 text-red-400 rounded hover:bg-red-100 text-xs"
+                        >
+                          <RxCross2 size={18} />
+                        </button>
+                      )}
 
                       <div
                         onMouseDown={(e) => onResizeMouseDown(e, col.id)}
@@ -420,15 +479,21 @@ const Spreadsheet = ({
 
             <tbody>
               {rows.map((row, ri) => (
-                <tr key={row.id}>
+                <tr key={row.id} className="group">
                   <td
                     onContextMenu={(e) => {
                       e.preventDefault();
-                      deleteRow(row.id);
+                      deleteRow(row.id, ri + 1);
                     }}
-                    className="text-center text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 text-slate-400 sticky left-0"
+                    className="text-center text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 text-slate-400 sticky left-0 relative"
                   >
-                    {ri + 1}
+                    <span className="group-hover:hidden">{ri + 1}</span>
+                    <button
+                      onClick={() => deleteRow(row.id, ri + 1)}
+                      className="hidden group-hover:flex items-center justify-center absolute inset-0 text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                    >
+                      <RxCross2 size={14} />
+                    </button>
                   </td>
                   {columns.map((col) => {
                     const isSel =
@@ -444,10 +509,9 @@ const Spreadsheet = ({
                       >
                         <input
                           value={row.cells[col.id] ?? ""}
-                          onChange={(e) =>
-                            handleCellChange(row.id, col.id, e.target.value)
-                          }
+                          onChange={(e) => handleCellChange(row.id, col.id, e.target.value)}
                           className="w-full h-9 px-3 bg-transparent outline-none"
+                          readOnly={col.name === "id"} // or whatever the col name is
                         />
                       </td>
                     );
@@ -460,10 +524,10 @@ const Spreadsheet = ({
                   className="bg-slate-100 dark:bg-slate-800"
                 >
                   <button
-                    onClick={() => addRows(10)}
-                    className="w-full h-11 text-slate-400 hover:text-sky text-xs"
+                    onClick={() => addRows(1)}
+                    className="w-full h-11 text-slate-400 hover:text-sky"
                   >
-                    + Add 10 more rows
+                    +
                   </button>
                 </td>
               </tr>
@@ -485,7 +549,6 @@ const Spreadsheet = ({
                 } else {
                   handleConfirm({
                     datasetName: "Existing",
-                    datasetType: "Demo",
                   });
                 }
               }}
@@ -510,5 +573,6 @@ const Spreadsheet = ({
     document.getElementById("portal"),
   );
 };
+
 
 export default Spreadsheet;

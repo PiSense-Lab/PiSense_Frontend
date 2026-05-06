@@ -221,7 +221,7 @@ export const editTable = async ({ datasetId, changes, rows }) => {
       });
     });
 
-    const INDEX_COL = "id"; // or whatever your column is named
+    const INDEX_COL = "index"; // or whatever your column is named
 
     changes
       .filter((c) => c.type === "row_insert")

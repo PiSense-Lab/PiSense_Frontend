@@ -190,10 +190,10 @@ export const editTable = async ({ datasetId, changes, rows }) => {
   const ORDER = {
     add_column: 0,
     rename_column: 1,
-    delete_column: 2,
-    edit_row: 3,
-    insert_rows: 4,
-    delete_row: 5,
+    edit_row: 2,
+    insert_rows: 3,
+    delete_row: 4,
+    delete_column: 5,
   };
   try {
     const formattedChanges = [];
@@ -212,16 +212,18 @@ export const editTable = async ({ datasetId, changes, rows }) => {
       const row = rows.find((r) => r.id === rowId);
       if (!row) return;
 
+      const idValue = row.cells["col-0"]; // or whatever col id maps to "id"
+
       formattedChanges.push({
         type: "edit_row",
         table_name: datasetId,
-        row_num: row.dbRowNum, // ← use this instead of rowIndex + 1
+        row_num: idValue,           // ← swap row_num for id
         row_data: Object.values(cellChanges),
         row_columns: Object.keys(cellChanges),
       });
     });
 
-    const INDEX_COL = "index"; // or whatever your column is named
+    const INDEX_COL = "id"; // or whatever your column is named
 
     changes
       .filter((c) => c.type === "row_insert")
@@ -240,11 +242,11 @@ export const editTable = async ({ datasetId, changes, rows }) => {
     changes
       .filter((c) => c.type === "row_delete")
       .forEach((c) => {
-        if (!c.dbRowNum) return; // skip new rows that were never saved
+        if (!c.idValue) return; // skip new rows never saved
         formattedChanges.push({
           type: "delete_row",
           table_name: datasetId,
-          row_num: c.dbRowNum,
+          row_num: c.idValue,         // ← swap row_num for id
         });
       });
 

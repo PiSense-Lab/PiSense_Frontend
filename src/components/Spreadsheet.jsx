@@ -237,7 +237,9 @@ const Spreadsheet = ({
       if (!confirmed) return;
 
       if (row?.dbRowNum) {
-        enqueue({ type: "row_delete", rowId, dbRowNum: row.dbRowNum });
+        const idColId = columns.find((c) => c.name === "id")?.id;
+        const idValue = row.cells[idColId];
+        enqueue({ type: "row_delete", rowId, idValue }); // ← store idValue instead of dbRowNum
       } else {
         setChangeQueue((prev) => prev.filter(
           (c) => !(c.type === "row_insert" && c.rowId === rowId)
@@ -427,7 +429,7 @@ const Spreadsheet = ({
                     className="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800 group"
                   >
                     <div className="flex items-center h-9 relative">
-                      {editingHeader === col.id && col.name !== "index" ? (
+                      {editingHeader === col.id && col.name !== "id" ? (
                         <input
                           ref={headerInputRef}
                           defaultValue={col.name}
@@ -448,7 +450,7 @@ const Spreadsheet = ({
                           {col.name}
                         </span>
                       )}
-                      {col.name !== "index" && (
+                      {col.name !== "id" && (
                         <button
                           onClick={() => deleteColumn(col.id)}
                           className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 text-red-400 rounded hover:bg-red-100 text-xs"
@@ -509,7 +511,7 @@ const Spreadsheet = ({
                           value={row.cells[col.id] ?? ""}
                           onChange={(e) => handleCellChange(row.id, col.id, e.target.value)}
                           className="w-full h-9 px-3 bg-transparent outline-none"
-                          readOnly={col.name === "index"} // or whatever the col name is
+                          readOnly={col.name === "id"} // or whatever the col name is
                         />
                       </td>
                     );

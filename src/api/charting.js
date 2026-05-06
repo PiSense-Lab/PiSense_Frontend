@@ -59,6 +59,39 @@ export function buildTimeSeries(json) {
 
 }
 
+export function getTimeBounds(data, timeKey = "time") {
+  if (!Array.isArray(data) || data.length === 0) return null;
+
+  let minMs = Infinity;
+  let maxMs = -Infinity;
+
+  for (const row of data) {
+    const timestamp = new Date(row?.[timeKey]).getTime();
+    if (!Number.isFinite(timestamp)) continue;
+    if (timestamp < minMs) minMs = timestamp;
+    if (timestamp > maxMs) maxMs = timestamp;
+  }
+
+  if (!Number.isFinite(minMs) || !Number.isFinite(maxMs)) return null;
+
+  return { minMs, maxMs };
+}
+
+export function filterTimeSeriesByDateRange(
+  data,
+  { startMs = null, endMs = null, timeKey = "time" } = {},
+) {
+  if (!Array.isArray(data) || data.length === 0) return [];
+
+  return data.filter((row) => {
+    const timestamp = new Date(row?.[timeKey]).getTime();
+    if (!Number.isFinite(timestamp)) return false;
+    if (startMs !== null && timestamp < startMs) return false;
+    if (endMs !== null && timestamp > endMs) return false;
+    return true;
+  });
+}
+
 /**
  * Converts snake_case or other field names to human-readable Title Case labels.
  * Examples: "temperature_celsius" → "Temperature Celsius", "temp" → "Temp"

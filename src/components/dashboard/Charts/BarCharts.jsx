@@ -11,12 +11,15 @@ import { useEffect } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { MetricSelectPanel } from "./chart-support/MetricSelectPanel";
 import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import { DateRangeFilterPanel } from "./chart-support/DateRangeFilterPanel";
+import { ExportGraphButton } from "./chart-support/ExportGraphButton";
+import { getAdaptiveTimeFormatters } from "./chart-support/timeAxisFormatters";
 import usePersistentState from "../../../hooks/usePersistentState";
+import useDateRangeFilter from "../../../hooks/useDateRangeFilter";
 
-const CHART_HEIGHT = 400;
-const POINT_WIDTH = 12;
+const CHART_HEIGHT = 460;
 
-export function GenerateBarChart({ jsonData, persistenceScope }) {
+export function GenerateBarChart({ jsonData, persistenceScope, onExport }) {
   const result = buildTimeSeries(jsonData);
   if (result.error) {
     // Display error to user
@@ -30,20 +33,37 @@ export function GenerateBarChart({ jsonData, persistenceScope }) {
     `${persistenceScope}:metric`,
     "",
   );
-  const metricKeys = result?.metricKeys || [];
-  const currentMetric = metricKeys.includes(selectedMetric)
+  const metricKeys = result?.metricKeys;
+  const currentMetric = metricKeys?.includes(selectedMetric)
     ? selectedMetric
-    : metricKeys[0] || "";
+    : metricKeys?.[0] || "";
 
   useEffect(() => {
-    if (metricKeys.length > 0 && !metricKeys.includes(selectedMetric)) {
+    if (metricKeys?.length > 0 && !metricKeys.includes(selectedMetric)) {
       setSelectedMetric(metricKeys[0]);
     }
   }, [metricKeys, selectedMetric, setSelectedMetric]);
 
-  if (!result || metricKeys.length === 0) {
+  if (!result || !metricKeys || metricKeys.length === 0) {
     return <div>No valid time-series data found.</div>;
   }
+
+  const {
+    activeRange,
+    startValue,
+    endValue,
+    minValue,
+    maxValue,
+    invalidRange,
+    filteredData,
+    dataRangeSpan,
+    onRangeChange,
+    onStartChange,
+    onEndChange,
+  } = useDateRangeFilter({
+    data: result.data,
+    persistenceScope,
+  });
 
   const formatLabel = (key) =>
     key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -56,7 +76,7 @@ export function GenerateBarChart({ jsonData, persistenceScope }) {
   };
 
   const yAxisWidth = (() => {
-    const values = result.data
+    const values = filteredData
       .map((entry) => entry[currentMetric])
       .filter((value) => typeof value === "number" && Number.isFinite(value));
 
@@ -70,30 +90,10 @@ export function GenerateBarChart({ jsonData, persistenceScope }) {
     return Math.min(92, Math.max(50, maxChars * 8 + 10));
   })();
 
-  // Keep panel size stable; only the inner plotting canvas becomes scrollable.
-  const chartWidth = Math.max(result.data.length * POINT_WIDTH, 1);
-
-  const formatXAxisTime = (value) => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString(undefined, {
-      month: "numeric",
-      day: "numeric",
-      hour: "numeric",
-    });
-  };
-
-  const formatTooltipTime = (value) => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
+  const { formatTick: formatXAxisTime, formatTooltip: formatTooltipTime } =
+    getAdaptiveTimeFormatters(
+      filteredData.length > 0 ? filteredData : result.data,
+    );
 
   return (
     <>
@@ -110,52 +110,65 @@ export function GenerateBarChart({ jsonData, persistenceScope }) {
         onChange={setBarColor}
       />
 
-      <div className="w-full max-w-full min-w-0">
-        <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden">
-          <div
-            style={{
-              width: chartWidth,
-              minWidth: "100%",
-              height: CHART_HEIGHT,
-            }}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={result.data}
-                margin={{ top: 10, right: 12, left: 8, bottom: 0 }}
-                barCategoryGap="20%"
-                barGap={1}
-                maxBarSize={18}
-              >
-                <CartesianGrid strokeDasharray="5 5" />
+      {filteredData.length === 0 && !invalidRange && (
+        <div className="mb-3 text-sm text-slate-500 dark:text-slate-300">
+          No data points found in the selected date range.
+        </div>
+      )}
 
-                <XAxis
-                  dataKey="time"
-                  tickFormatter={formatXAxisTime}
-                  minTickGap={24}
-                />
+      <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+        <BarChart
+          data={filteredData}
+          margin={{ top: 10, right: 12, left: 8, bottom: 0 }}
+          barCategoryGap="20%"
+          barGap={1}
+          maxBarSize={18}
+        >
+          <CartesianGrid strokeDasharray="5 5" />
 
-                <YAxis
-                  width={yAxisWidth}
-                  tickMargin={10}
-                  tickFormatter={axisValueFormatter}
-                />
+          <XAxis
+            dataKey="time"
+            tickFormatter={formatXAxisTime}
+            minTickGap={24}
+          />
 
-                <Tooltip
-                  labelFormatter={formatTooltipTime}
-                  formatter={(value) => axisValueFormatter(value)}
-                />
+          <YAxis
+            width={yAxisWidth}
+            tickMargin={10}
+            tickFormatter={axisValueFormatter}
+          />
 
-                <Bar
-                  key={currentMetric}
-                  dataKey={currentMetric}
-                  name={getMetricLabel(currentMetric)}
-                  fill={barColor}
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <Tooltip
+            labelFormatter={formatTooltipTime}
+            formatter={(value) => axisValueFormatter(value)}
+          />
+
+          <Bar
+            key={currentMetric}
+            dataKey={currentMetric}
+            name={getMetricLabel(currentMetric)}
+            fill={barColor}
+            radius={[4, 4, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+        <DateRangeFilterPanel
+          activeRange={activeRange}
+          startValue={startValue}
+          endValue={endValue}
+          minValue={minValue}
+          maxValue={maxValue}
+          invalidRange={invalidRange}
+          dataRangeSpan={dataRangeSpan}
+          onStartChange={onStartChange}
+          onEndChange={onEndChange}
+          onRangeChange={onRangeChange}
+        />
+
+        <div className="ml-auto">
+          <ExportGraphButton onClick={onExport} />
         </div>
       </div>
     </>

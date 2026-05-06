@@ -7,13 +7,17 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { buildTimeSeries } from "../../../api/charting";
 import { MetricSelectPanel } from "./chart-support/MetricSelectPanel";
 import { ColorCodingPanel } from "./chart-support/ColorCodingPanel";
+import { DateRangeFilterPanel } from "./chart-support/DateRangeFilterPanel";
+import { ExportGraphButton } from "./chart-support/ExportGraphButton";
+import { getAdaptiveTimeFormatters } from "./chart-support/timeAxisFormatters";
 import usePersistentState from "../../../hooks/usePersistentState";
+import useDateRangeFilter from "../../../hooks/useDateRangeFilter";
 
-export function GenerateLineChart({ jsonData, persistenceScope }) {
+export function GenerateLineChart({ jsonData, persistenceScope, onExport }) {
   const result = buildTimeSeries(jsonData);
   if (result.error) {
     // Display error to user
@@ -27,7 +31,10 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
     `${persistenceScope}:metric`,
     "",
   );
-  const metricKeys = result?.metricKeys || [];
+  const metricKeys = useMemo(
+    () => result?.metricKeys || [],
+    [result?.metricKeys],
+  );
   const currentMetric = metricKeys.includes(selectedMetric)
     ? selectedMetric
     : metricKeys[0] || "";
@@ -42,6 +49,23 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
     return <div>No valid time-series data found.</div>;
   }
 
+  const {
+    activeRange,
+    startValue,
+    endValue,
+    minValue,
+    maxValue,
+    invalidRange,
+    filteredData,
+    dataRangeSpan,
+    onRangeChange,
+    onStartChange,
+    onEndChange,
+  } = useDateRangeFilter({
+    data: result.data,
+    persistenceScope,
+  });
+
   // fallback label formatter (in case you didn’t add it in backend)
   const formatLabel = (key) =>
     key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -54,7 +78,7 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
   };
 
   const yAxisWidth = (() => {
-    const values = result.data
+    const values = filteredData
       .map((entry) => entry[currentMetric])
       .filter((value) => typeof value === "number" && Number.isFinite(value));
 
@@ -67,6 +91,11 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
 
     return Math.min(92, Math.max(50, maxChars * 8 + 10));
   })();
+
+  const { formatTick: formatXAxisTime, formatTooltip: formatTooltipTime } =
+    getAdaptiveTimeFormatters(
+      filteredData.length > 0 ? filteredData : result.data,
+    );
 
   return (
     <>
@@ -83,16 +112,23 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
         onChange={setLineColor}
       />
 
-      <ResponsiveContainer width="100%" height={400}>
+      {filteredData.length === 0 && !invalidRange && (
+        <div className="mb-3 text-sm text-slate-500 dark:text-slate-300">
+          No data points found in the selected date range.
+        </div>
+      )}
+
+      <ResponsiveContainer width="100%" height={460}>
         <LineChart
-          data={result.data}
+          data={filteredData}
           margin={{ top: 10, right: 12, left: 8, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="5 5" />
 
           <XAxis
             dataKey="time"
-            tickFormatter={(t) => new Date(t).toLocaleDateString()}
+            tickFormatter={formatXAxisTime}
+            minTickGap={24}
           />
 
           <YAxis
@@ -102,7 +138,7 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
           />
 
           <Tooltip
-            labelFormatter={(label) => new Date(label).toLocaleDateString()}
+            labelFormatter={formatTooltipTime}
             formatter={(value) => axisValueFormatter(value)}
           />
 
@@ -116,6 +152,25 @@ export function GenerateLineChart({ jsonData, persistenceScope }) {
           />
         </LineChart>
       </ResponsiveContainer>
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+        <DateRangeFilterPanel
+          activeRange={activeRange}
+          startValue={startValue}
+          endValue={endValue}
+          minValue={minValue}
+          maxValue={maxValue}
+          invalidRange={invalidRange}
+          dataRangeSpan={dataRangeSpan}
+          onStartChange={onStartChange}
+          onEndChange={onEndChange}
+          onRangeChange={onRangeChange}
+        />
+
+        <div className="ml-auto">
+          <ExportGraphButton onClick={onExport} />
+        </div>
+      </div>
     </>
   );
 }

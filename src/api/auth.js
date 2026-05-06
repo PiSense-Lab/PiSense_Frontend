@@ -53,7 +53,8 @@ export async function getToken(username, password, rememberMe) {
       } catch (cacheError) {
         console.warn("Weather cache initialization failed on login:", cacheError);
       }
-      return { success: true, token: data.access_token };
+
+      return { success: true, token: data.access_token, userId };
     } else {
       const errorData = await response.json();
       return {

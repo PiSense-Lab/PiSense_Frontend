@@ -1,8 +1,12 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const SelectedDataset = ({ datasets, selectedName, onChange }) => {
   const [selected, setSelected] = useState(() => {
-    return datasets.find((dataset) => dataset.table_name === selectedName) || datasets[0] || null;
+    return (
+      datasets.find((dataset) => dataset.table_name === selectedName) ||
+      datasets[0] ||
+      null
+    );
   });
 
   useEffect(() => {
@@ -24,7 +28,6 @@ const SelectedDataset = ({ datasets, selectedName, onChange }) => {
     const match = datasets.find((d) => String(d.table_name) === e.target.value);
     if (match) setSelected(match);
   };
-
   return (
     <div className="flex flex-col gap-1">
       <label className="block text-sm/6 font-semibold">Selected Dataset</label>
